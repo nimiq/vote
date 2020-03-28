@@ -1,75 +1,11 @@
-export function vote() {
-    return `Vote-`;
+export enum VoteTypes {
+    yesNo,
+    multipleChoice,
+    weightedChoices,
 }
 
-export abstract class Vote {
-
-    name!: string;
-
-    constructor(name: string) {
-        this.name = name;
-    }
-
-    serialize(prefix: string = 'Vote'): string {
-        if (prefix == 'Vote') {
-            return `${prefix}_${this.name}_${this.serializeOptions(prefix)}`;
-        }
-        throw `Format "${prefix} not supported.`;
-    }
-
-    abstract serializeOptions(prefix: string): string;
-
-    static _parse<Type extends Vote>(message: string, parse: (name: string, elements: string[]) => Type): Type {
-        if (message.startsWith('Vote')) {
-            // Human readable version
-            try {
-                // Vote_<Election name as string>_<options>
-                const elements = message.split('_');
-                elements.shift();
-                const name = elements.shift()!;
-                return parse(name, elements);
-            }
-            catch (e) {
-                console.warn('Parsing vote failed', message, parse, e);
-            }
-        }
-        throw `Not a voting message or format not supported "${message}"`;
-    }
-}
-
-export type WeightedOptions = {
+type BaseVote = {
     name: string,
-    weight: number,
-}
-
-export class WeightedVote extends Vote {
-
-    options: WeightedOptions[];
-
-    constructor(name: string, options: WeightedOptions[]) {
-        super(name);
-        this.options = options;
-    }
-
-    serializeOptions(prefix: string): string {
-        if (prefix == 'Vote') {
-            return this.options.map((option) => `${option.name}:${option.weight}`).join('_');
-        }
-        throw `Format "${prefix} not supported.`;
-    }
-
-    static parse(message: string): WeightedVote {
-        return Vote._parse(message, this.parseOptions);
-    }
-
-    static parseOptions(name: string, elements: string[]): WeightedVote {
-        // Vote_<Election name as string>_<option as string>:<weight as 0-99>
-        const options: WeightedOptions[] = elements.map((option => {
-            const [name, weight] = option.split(':');
-            return { name, weight: parseInt(weight, 10) };
-        }));
-        return new WeightedVote(name, options);
-    }
 }
 
 export enum YesNo {
@@ -77,53 +13,76 @@ export enum YesNo {
     yes = 'yes',
 }
 
-export class YesNoVote extends Vote {
-
-    answer!: YesNo;
-
-    constructor(name: string, answer: YesNo) {
-        super(name);
-        this.answer = answer;
-    }
-
-    serializeOptions(prefix: string): string {
-        if (prefix == 'Vote') {
-            return this.answer;
-        }
-        throw `Format "${prefix} not supported.`;
-    }
-
-    static parse(message: string): YesNoVote {
-        return Vote._parse(message, this.parseAnswer);
-    }
-
-    static parseAnswer(name: string, answers: string[]): YesNoVote {
-        // Vote_<Election name as string>_<”yes” or “no”>
-        return new YesNoVote(name, answers[0] == "yes" ? YesNo.yes : YesNo.no);
-    }
+type YesNoVote = BaseVote & {
+    answer: YesNo;
 }
 
-export class MultipleChoiceVote extends Vote {
-    choices!: string[];
+type MultipleChoiceVote = BaseVote & {
+    choices: string[],
+}
 
-    constructor(name: string, choices: string[]) {
-        super(name);
-        this.choices = choices;
-    }
+type WeightedCoicesVote = BaseVote & {
+    choices: WeightedChoice[],
+}
 
-    serializeOptions(prefix: string): string {
-        if (prefix == 'Vote') {
-            return this.choices.join('_');
+type WeightedChoice = {
+    name: string,
+    weight: number,
+}
+
+export function parseVote(message: string, type: VoteTypes.yesNo): YesNoVote
+export function parseVote(message: string, type: VoteTypes.multipleChoice): MultipleChoiceVote
+export function parseVote(message: string, type: VoteTypes.weightedChoices): WeightedCoicesVote
+export function parseVote(message: string, type: VoteTypes): YesNoVote | MultipleChoiceVote | WeightedCoicesVote {
+    if (message.startsWith('Vote')) {
+        // Human readable version
+        try {
+            // Vote_<Election name as string>_<options>
+            const elements = message.split('_');
+            elements.shift();
+            const name = elements.shift()!;
+            switch(type) {
+                case VoteTypes.yesNo: return { name, answer: elements[0] == "yes" ? YesNo.yes : YesNo.no }
+                case VoteTypes.multipleChoice: return { name, choices: elements }
+                case VoteTypes.weightedChoices: {
+                    const choices: WeightedChoice[] = elements.map((option => {
+                        const [name, weight] = option.split(':');
+                        return { name, weight: parseInt(weight, 10) };
+                    }));
+                    return { name, choices }
+                }
+                default: throw `Vote type "${type}" does not exist`;
+            }
         }
-        throw `Format "${prefix} not supported.`;
+        catch (e) {
+            // TODO throw?
+            console.warn('Parsing vote failed', message, type, e);
+        }
     }
+    throw `Not a voting message or format not supported "${message}"`;
+}
 
-    static parse(message: string): MultipleChoiceVote {
-        return Vote._parse(message, this.parseChoices);
+export function serializeVote(vote: YesNoVote, type: VoteTypes.yesNo, prefix: string): string
+export function serializeVote(vote: MultipleChoiceVote, type: VoteTypes.multipleChoice, prefix: string): string
+export function serializeVote(vote: WeightedCoicesVote, type: VoteTypes.weightedChoices, prefix: string): string
+export function serializeVote(vote: YesNoVote | MultipleChoiceVote | WeightedCoicesVote, type: VoteTypes, prefix = 'Vote'): string {
+    if (prefix == 'Vote') {
+        return `${prefix}_${vote.name}_${serializeChoice(vote, type, prefix)}`;
     }
+    throw `Format "${prefix} not supported.`;
+}
 
-    static parseChoices(name: string, choices: string[]): MultipleChoiceVote {
-        // Vote_<Election name as string>_<choice name as string>_<next choice>
-        return new MultipleChoiceVote(name, choices);
+function serializeChoice(vote: YesNoVote | MultipleChoiceVote | WeightedCoicesVote, type: VoteTypes, prefix = 'Vote'): string {
+    if (prefix == 'Vote') {
+        switch(type) {
+            case VoteTypes.yesNo: return (vote as YesNoVote).answer
+            case VoteTypes.multipleChoice: return (vote as MultipleChoiceVote).choices.join('_')
+            case VoteTypes.weightedChoices: return (vote as WeightedCoicesVote).choices
+                .map((choice) => `${choice.name}:${choice.weight}`)
+                .join('_');
+            default: throw `Vote type "${type}" does not exist`;
+        }
+        return `${prefix}_${this.name}_${this.serializeOptions(prefix)}`;
     }
+    throw `Format "${prefix} not supported.`;
 }
