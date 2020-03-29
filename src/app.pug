@@ -1,0 +1,61 @@
+#app(v-if='loading') loading...
+#app(v-else)
+    .debugging(v-if='test')
+        div Loading {{ loading }}
+        div VoteType {{ VoteTypes }}
+        div VoteTypes.weightedChoices {{ VoteTypes.weightedChoices }}
+        div type {{ type }}
+        div === {{ type == VoteTypes.weightedChoices }}
+        div config {{ config }}
+        div yesVote {{ yesVote }}
+        div consensus {{ consensus }}
+        div test {{ test }}
+        div voted {{ voted }}
+
+    .nq-card(v-if='config && !voted')
+        .nq-card-header Voting
+        .nq-card-body
+            .yesno(v-if='type === VoteTypes.yesNo')
+                input.radio(id='voteYes' value='yes' v-model='yesVote')
+                label(for='voteYes') yes / agree
+                input.radio(id='voteNo' value='no' v-model='yesVote')
+                label(for='voteNo') no / disagree
+            .options(v-if='type === VoteTypes.multipleChoice')
+                .option(v-for='option of options')
+                    input.check(:id='option.name' type='checkbox' value='1' v-model='option.value')
+                    label(:for='option.name') {{ option.label }}
+            .options(v-if='type === VoteTypes.weightedChoices')
+                .option(v-for='option of options' :key='option.name')
+                    label(:for='option.name') {{ option.label }} ({{ Math.round(100 * option.weight / totalWeight) }}%)
+                    input.slider(:id='option.name' type='range' min='0' max='99' v-model.number='option.weight')
+            button.nq-button(@click='submitVote' :disabled='!consensus') {{ consensus ? 'vote' : 'waiting for consensus' }}
+
+    .nq-card(v-if='config && voted')
+        .nq-card-header Thanks for voting!
+        .nq-card-body
+            p Thank you for making your voice heard when it comes to the future of Nimiq!
+            p Your vote as recorded on the blockchain: #[br] {{ voted.vote }}
+            p.
+                You can verify your vote on
+                #[a(:href='`http://nimiq.watch/#${voted.hash}`') nimiq.watch].
+            p
+                small.
+                    Note: if you got the message "That transaction of block can not be found.",
+                    that means you have to wait for the next block for your vote to be mined by the network.
+
+    .nq-card(v-if='!config')
+        .nq-card-header Currently no voting
+        .nq-card-body Find out more about Nimiq at #[a(href='https://nimiq.com') nimiq.com].
+
+    .nq-card(v-if='config')
+        .nq-card-header Results of currently ongoing voting
+        .nq-card-body(v-if='!currentResults') loading...
+        .nq-card-body(v-else)
+            p {{ currentResults.label }}
+            p(v-for='result of currentResults.results') {{ result.label}}: {{ Math.round(result.value * 100) }}%.
+        .nq-card-footer
+
+    .nq-card(v-if='past.length > 0')
+        .nq-card-header Past results
+        .nq-card-body
+        .nq-card-footer
