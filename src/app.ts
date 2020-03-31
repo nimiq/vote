@@ -1,16 +1,12 @@
 import '@nimiq/style/nimiq-style.min.css';
 import '@nimiq/vue-components/dist/NimiqVueComponents.css';
 import { Component, Vue } from 'vue-property-decorator';
-import Nimiq, { Client, ClientTransactionDetails, BufferUtils } from '@nimiq/core-web';
 import HubApi from '@nimiq/hub-api';
+import { loadNimiqCoreOnly, loadNimiqWithCryptography } from './lib/CoreLoader';
 
-// import { loadNimiqWithCryptography } from './lib/CoreLoader';
 import { YesNo, serializeVote, VoteTypes, WeightedChoice, parseVote, YesNoVote, BaseVote, MultipleChoiceVote,
     WeightedCoicesVote, voteTotalWeight } from './lib/votes';
 import { loadConfig, Config } from './config';
-
-// type Nimiq = typeof import('@nimiq/core-web');
-// type Client = import('@nimiq/core-web').Client;
 
 type Option = WeightedChoice & {
     label: string,
@@ -64,7 +60,7 @@ export default class App extends Vue {
     config: Config | null = null; // active one
     past: Array<Config> = [];
     // nimiq: Nimiq | null = null;
-    client?: Client;
+    client?: Nimiq.Client;
     consensus = false;
     height = 0;
     test = test;
@@ -80,6 +76,9 @@ export default class App extends Vue {
     }
 
     async mounted() {
+        const Nimiq = await loadNimiqCoreOnly();
+        await loadNimiqWithCryptography(!test);
+
         console.log('mounted 1', new Date().getMilliseconds());
         // [this.configs,this.nimiq] = await Promise.all([loadConfig(configAddress), loadNimiqWithCryptography(!test)]);
         // this.client = this.nimiq.Client.Configuration.builder().instantiateClient();
@@ -90,7 +89,6 @@ export default class App extends Vue {
 
             console.log((Nimiq.GenesisConfig as any)._config, !(Nimiq.GenesisConfig as any)._config);
             if (!(Nimiq.GenesisConfig as any)._config) {
-                await Nimiq.load(wasmUrl);
                 if (test) Nimiq.GenesisConfig.test(); else Nimiq.GenesisConfig.main();
             }
             this.client = Nimiq.Client.Configuration.builder().instantiateClient();
@@ -224,7 +222,7 @@ export default class App extends Vue {
 
         const decoder = new TextDecoder();
         const votes: CastVote<BaseVote>[] = [];
-        txs!.forEach((tx: ClientTransactionDetails) => {
+        txs!.forEach((tx: Nimiq.ClientTransactionDetails) => {
             try {
                 const serialized = decoder.decode(tx.data.raw);
                 const vote = parseVote(serialized, config.type);
