@@ -1,31 +1,30 @@
 import { unique } from 'typescript-array-utils';
-import { LimitIterable } from '@nimiq/core-web';
 
 export enum VoteTypes {
-    yesNo = 'yesNo',
+    // yesNo = 'yesNo',
+    singleChoice = 'singleChoice',
     multipleChoice = 'multipleChoice',
     weightedChoices = 'weightedChoices',
 }
 
+export type BaseChoice = {
+    name: string,
+    weight: number,
+}
+
 export type BaseVote = {
     name: string,
+    choices: BaseChoice[],
 }
 
-export enum YesNo {
-    no = 'no',
-    yes = 'yes',
-}
+// export enum YesNo {
+//     no = 'no',
+//     yes = 'yes',
+// }
 
-export type YesNoVote = BaseVote & {
-    answer: YesNo,
-}
-
-export type MultipleChoiceVote = BaseVote & {
-    choices: string[],
-}
-
-export type WeightedCoicesVote = BaseVote & {
-    choices: WeightedChoice[],
+export type FixedChoice = {
+    name: string,
+    weight: 1,
 }
 
 export type WeightedChoice = {
@@ -33,14 +32,26 @@ export type WeightedChoice = {
     weight: number,
 }
 
-export function parseVote(message: string, type: VoteTypes.yesNo): YesNoVote;
+export type SingleChoiceVote = BaseVote & {
+    choices: [FixedChoice],
+}
+
+export type MultipleChoiceVote = BaseVote & {
+    choices: FixedChoice[],
+}
+
+export type WeightedCoicesVote = BaseVote & {
+    choices: WeightedChoice[],
+}
+
+export function parseVote(message: string, type: VoteTypes.singleChoice): SingleChoiceVote;
 export function parseVote(message: string, type: VoteTypes.multipleChoice): MultipleChoiceVote;
 export function parseVote(message: string, type: VoteTypes.weightedChoices): WeightedCoicesVote;
 export function parseVote(message: string, type: string): BaseVote;
 export function parseVote(
     message: string,
     type: VoteTypes | string,
-): YesNoVote | MultipleChoiceVote | WeightedCoicesVote {
+): SingleChoiceVote | MultipleChoiceVote | WeightedCoicesVote {
     function invalid(reason: string) {
         throw new Error(`Invalid vote: "${message}" is not a valid "${type}" vote. Reason: ${reason}.`);
     }
@@ -52,15 +63,13 @@ export function parseVote(
             elements.shift();
             const name = elements.shift()!;
             switch (type) {
-                case VoteTypes.yesNo: {
+                case VoteTypes.singleChoice: {
                     if (elements.length !== 1) invalid('only one answer expected');
-                    const answer = elements[0];
-                    if (answer === 'yes' || answer === 'no') invalid('only yes or no expected');
-                    return { name, answer: elements[0] === 'yes' ? YesNo.yes : YesNo.no };
+                    return { name, choices: [{ name: elements[0], weight: 1 }] };
                 }
                 case VoteTypes.multipleChoice: {
                     if (elements.length !== unique(elements).length) invalid('choices must be unique');
-                    return { name, choices: elements };
+                    return { name, choices: elements.map((choice) => ({ name: choice, weight: 1 })) };
                 }
                 case VoteTypes.weightedChoices: {
                     const choices: WeightedChoice[] = elements.map(((option) => {
@@ -85,16 +94,18 @@ export function parseVote(
 }
 
 function serializeChoice(
-    vote: YesNoVote | MultipleChoiceVote | WeightedCoicesVote,
+    vote: SingleChoiceVote | MultipleChoiceVote | WeightedCoicesVote,
     type: VoteTypes,
     prefix = 'Vote',
 ): string {
     if (prefix === 'Vote') {
         switch (type) {
-            case VoteTypes.yesNo: return (vote as YesNoVote).answer;
-            case VoteTypes.multipleChoice: return (vote as MultipleChoiceVote).choices.join('_');
+            case VoteTypes.singleChoice: return (vote as SingleChoiceVote).choices[0].name;
+            case VoteTypes.multipleChoice: return (vote as MultipleChoiceVote).choices
+                .map((choice) => choice.name)
+                .join('_');
             case VoteTypes.weightedChoices: return (vote as WeightedCoicesVote).choices
-                .map((choice) => `${choice.name}:${choice.weight}`)
+                .map((choice) => `${choice.name}:${Math.round(choice.weight)}`)
                 .join('_');
             default: throw new Error(`Vote type "${type}" does not exist`);
         }
@@ -102,11 +113,11 @@ function serializeChoice(
     throw new Error(`Format "${prefix}" not supported.`);
 }
 
-export function serializeVote(vote: YesNoVote, type: VoteTypes.yesNo, prefix?: string): string
-export function serializeVote(vote: MultipleChoiceVote, type: VoteTypes.multipleChoice, prefix?: string): string
-export function serializeVote(vote: WeightedCoicesVote, type: VoteTypes.weightedChoices, prefix?: string): string
+// export function serializeVote(vote: SingleChoiceVote, type: VoteTypes.singleChoice, prefix?: string): string
+// export function serializeVote(vote: MultipleChoiceVote, type: VoteTypes.multipleChoice, prefix?: string): string
+// export function serializeVote(vote: WeightedCoicesVote, type: VoteTypes.weightedChoices, prefix?: string): string
 export function serializeVote(
-    vote: YesNoVote | MultipleChoiceVote | WeightedCoicesVote,
+    vote: SingleChoiceVote | MultipleChoiceVote | WeightedCoicesVote,
     type: VoteTypes,
     prefix = 'Vote',
 ): string {
