@@ -39,6 +39,8 @@ module.exports = {
         'prefer-const': ['error', { destructuring: 'all' }],
         'no-nested-ternary': 'off',
         'no-restricted-syntax': ['error', ...noRestrictedSyntax],
+        'no-shadow': 'warn',
+        'no-await-in-loop': 'off', // why not?
 
         '@typescript-eslint/member-delimiter-style': ['error', memberDelimiterStyleOverrides],
         '@typescript-eslint/ban-ts-ignore': 'off',
