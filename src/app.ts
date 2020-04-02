@@ -2,13 +2,16 @@ import '@nimiq/style/nimiq-style.min.css';
 import '@nimiq/vue-components/dist/NimiqVueComponents.css';
 import { Component, Vue } from 'vue-property-decorator';
 import HubApi from '@nimiq/hub-api';
+import stringHash from 'string-hash';
+
 import { loadNimiqCoreOnly, loadNimiqWithCryptography } from './lib/CoreLoader';
-
-import { YesNo, serializeVote, VoteTypes, WeightedChoice, parseVote, YesNoVote, BaseVote, MultipleChoiceVote,
-    WeightedCoicesVote, voteTotalWeight } from './lib/votes';
+import { serializeVote, parseVote, voteTotalWeight, BaseVote, VoteTypes, BaseChoice } from './lib/votes';
 import { loadConfig, Config } from './config';
+import { findTxBetween, fetchJson, Tx, watchApi } from './lib/network';
 
-type Option = WeightedChoice & {
+const distinctColors = require('distinct-colors').default;
+
+type Option = BaseChoice & {
     label: string,
 }
 
@@ -19,77 +22,125 @@ type Receipt = {
 
 type CastVote<T extends BaseVote> = {
     vote: T,
+    tx: {
+        sender: string,
+        value: number,
+        height: number,
+    },
     value: number,
+}
+
+type ElectionVote = {
+    sender: string,
+    value: number,
+    height: number,
 }
 
 type ElectionResult = {
     label: string,
     value: number,
+    votes: ElectionVote[],
 }
 
 type ElectionResults = {
     label: string,
     results: ElectionResult[],
+    stats: {
+        votes: number,
+        nim: number,
+    },
 }
 
 Vue.mixin({
     created() {
         const enums: any = { VoteTypes };
         const target = this as any;
-        console.log('created', target);
         for (const name of Object.keys(enums)) {
             target[name] = Object.freeze(enums[name]);
         }
     },
 });
 
-// const test = window.location.href.includes('localhost') || window.location.href.includes('testnet');
-const test = false;
-const configAddress = `https://nimiq.community/voting.${test ? 'test' : 'live'}.json`;
+// const testnet = window.location.href.includes('localhost') || window.location.href.includes('testnet');
+const testnet = false;
+const dummies = true;
+const debug = false;
+const configAddress = `https://nimiq.community/voting.${testnet ? 'test' : 'live'}.json`;
 const voteAddress = 'NQ07 0000 0000 0000 0000 0000 0000 0000 0000';
 const appLogo = `${window.location.origin}/android-icon-192x192.png`;
-const wasmUrl = `${window.location.origin}/wasm/`;
 
 @Component({ components: {} })
 export default class App extends Vue {
     loading = true;
-    yesVote = false;
-    choices = [];
-    options: Option[] = [];
+    choices: Option[] = [];
     configs: Array<Config> = [];
     config: Config | null = null; // active one
+    singleChoice: string = '';
+    multipleChoices: string[] = [];
     past: Array<Config> = [];
-    // nimiq: Nimiq | null = null;
     client?: Nimiq.Client;
     consensus = false;
     height = 0;
-    test = test;
-    private hub: HubApi = new HubApi(test ? 'https://hub.nimiq-testnet.com' : 'https://hub.nimiq.com');
-    // {"hash":"hash","vote":"v"}
+    lastCounted = 0;
+    testnet = testnet;
+    debug = debug;
+    dummies = dummies;
+    private hub: HubApi = new HubApi(testnet ? 'https://hub.nimiq-testnet.com' : 'https://hub.nimiq.com');
     voted: Receipt | null = null;
     currentResults: ElectionResults | null = null;
-    // voted: Receipt | null = { hash: 'hash', vote: 'v' };
+    error = '';
+    colors = distinctColors().map((color: any) => color.hex());
 
-    created() {
-        // (this as any).VoteTypes = Object.freeze(VoteTypes);
-        console.log('created', new Date().getMilliseconds());
-    }
+    async created() {
+        (window as any).app = this;
+        const start = new Date().getTime();
 
-    async mounted() {
-        const Nimiq = await loadNimiqCoreOnly();
-        await loadNimiqWithCryptography(!test);
-
-        console.log('mounted 1', new Date().getMilliseconds());
-        // [this.configs,this.nimiq] = await Promise.all([loadConfig(configAddress), loadNimiqWithCryptography(!test)]);
-        // this.client = this.nimiq.Client.Configuration.builder().instantiateClient();
+        // load config and block height
+        console.log('creating');
         try {
-            this.configs = await loadConfig(configAddress);
+            this.configs = await loadConfig(configAddress, dummies);
+            this.height = (await watchApi('latest/1', testnet))[0].height;
+        } catch (e) {
+            if (!this.configs || !this.height) {
+                console.log('Failed to load', this.configs, this.height, e);
+                this.error = 'Something went wrong loading. Are you offline? Adblocker enabled? '
+                             + `Maybe have a look and reload.\n\nReason: ${e}`;
+                return;
+            }
+        }
+
+        // parse config
+        const { configs, height, choices } = this;
+        console.log(configs, height);
+        const activeConfigs = configs.filter((config) => config.start <= height && config.end > height);
+        if (activeConfigs.length > 1) {
+            throw new Error('Voting misconfigurated, more than one voting happing at the same time.');
+        } else if (activeConfigs.length === 1) {
+            [this.config] = activeConfigs;
+            const { config } = this;
+            if (config.choices) {
+                for (const choice of config.choices) {
+                    choices.push({
+                        label: choice.label || choice.name,
+                        name: choice.name,
+                        weight: config.type === VoteTypes.weightedChoices ? 50 : 0,
+                    });
+                }
+            } else throw new Error('No choices for this voting found.');
+        }
+        this.past = this.configs.filter((config) => config.end <= height);
+
+        this.loading = false;
+
+        console.log('loaded config', new Date().getTime() - start, this.height, this.config, this.choices);
+
+        try {
+            const Nimiq = await loadNimiqCoreOnly();
+            await loadNimiqWithCryptography(!testnet);
 
             // initialize Nimiq
-
-            console.log((Nimiq.GenesisConfig as any)._config, !(Nimiq.GenesisConfig as any)._config);
             if (!(Nimiq.GenesisConfig as any)._config) {
-                if (test) Nimiq.GenesisConfig.test(); else Nimiq.GenesisConfig.main();
+                if (testnet) Nimiq.GenesisConfig.test(); else Nimiq.GenesisConfig.main();
             }
             this.client = Nimiq.Client.Configuration.builder().instantiateClient();
             this.height = await this.client.getHeadHeight();
@@ -97,13 +148,13 @@ export default class App extends Vue {
             console.log(e);
             // if (e.message !== 'GenesisConfig already initialized') {
             if (!this.configs || !this.client || !this.height) {
-                alert(`Something went wrong loading. Are you offline? Adblocker enabled? Maybe have a look and reload.
-                       \nReason: ${e}`);
+                this.error = 'Something went wrong loading. Are you offline? Adblocker enabled? '
+                             + `Maybe have a look and reload.\n\nReason: ${e}`;
                 // window.document.location.reload();
                 return;
             }
         }
-        const { client, height } = this;
+        const { client } = this;
 
         client.addConsensusChangedListener((state) => {
             this.consensus = state === Nimiq.Client.ConsensusState.ESTABLISHED;
@@ -112,155 +163,171 @@ export default class App extends Vue {
             this.height = await client.getHeadHeight();
         });
 
-        const activeConfigs = this.configs.filter((config) => config.start >= height && config.end > height);
-        if (activeConfigs.length > 1) {
-            throw new Error('Voting misconfigurated, more than one voting happing at the same time.');
-        } else if (activeConfigs.length === 1) {
-            [this.config] = activeConfigs;
-            if (this.config.options) {
-                for (const option of this.config.options) {
-                    this.options.push({
-                        label: option.label || option.name,
-                        name: option.name,
-                        weight: 50,
-                    });
-                }
-            }
-        }
-
-        this.past = this.configs.filter((config) => config.end <= height);
-
-        console.log('mounted 2', new Date().getMilliseconds(), JSON.stringify(this.options));
-        console.log(this.config);
-
-        this.loading = false;
+        console.log('loaded Nimiq', new Date().getTime() - start, client);
 
         await client.waitForConsensusEstablished();
-        if (this.config) {
-            this.currentResults = await this.countVotes(this.config);
-        }
+        if (this.config) await this.countPreliminaryVotes();
+
+        console.log('counted votes', new Date().getTime() - start, JSON.stringify(this.currentResults, null, '  '));
     }
 
-    serializeVote(): string {
-        const { name, type } = this.config!;
-
+    serializeChoices(): BaseChoice[] {
+        const { type } = this.config!;
         switch (type) {
-            case VoteTypes.yesNo: {
-                const answer = this.yesVote ? YesNo.yes : YesNo.no;
-                return serializeVote({ name, answer }, VoteTypes.yesNo);
-            }
+            case VoteTypes.singleChoice:
+                return [{ name: this.singleChoice, weight: 1 }];
             case VoteTypes.multipleChoice: {
-                const choices = this.options
-                    .filter((option) => option.weight > 0)
-                    .map((option) => option.name);
-                return serializeVote({ name, choices }, VoteTypes.multipleChoice);
+                return this.multipleChoices
+                    .map((choice) => ({ name: choice, weight: 1 }));
             }
             case VoteTypes.weightedChoices: {
-                const choices = this.options.filter((option) => option.weight > 0);
-                return serializeVote({ name, choices }, VoteTypes.weightedChoices);
+                const total = voteTotalWeight(this.choices);
+                return this.choices.map((choice) => ({
+                    name: choice.name,
+                    weight: (choice.weight / total) * 100,
+                }));
             }
             default: throw new Error(`Vote type "${type}" not implemented!`);
         }
     }
 
     async submitVote() {
-        const vote = this.serializeVote();
+        const { config, hub, height } = this;
+        const vote = serializeVote({ name: config!.name, choices: this.serializeChoices() }, config!.type);
         console.log('Submitted vote:', vote);
-        console.log('parsed', parseVote(vote, this.config!.type));
+        console.log('parsed', parseVote(vote, config!.type));
 
-        const signedTransaction = await this.hub.checkout({
+        const signedTransaction = await hub.checkout({
             appName: 'Nimiq Voting App',
             shopLogoUrl: appLogo,
             recipient: voteAddress,
             value: 1,
             extraData: vote,
-            validityDuration: Math.min(120, this.config!.end - this.height),
+            validityDuration: Math.min(120, config!.end - height),
         });
 
-        // {"hash":"hash","vote":"v"}
         this.voted = {
             hash: signedTransaction.hash,
             vote,
         };
     }
 
-    sumUpElectionResults(votes: CastVote<BaseVote>[], config: Config) {
-        function create(options: string[]) { return Object.fromEntries(options.map((option) => [option, 0])); }
-        switch (config.type) {
-            case VoteTypes.yesNo: {
-                const total = create([YesNo.yes, YesNo.no]);
-                for (const vote of votes as CastVote<YesNoVote>[]) {
-                    total[vote.vote.answer] += vote.value;
-                    // Next version with details should include:
-                    // total + for each vote: value, height, address
-                }
-                return total;
-            }
-            case VoteTypes.multipleChoice: {
-                const total = create(config.options!.map((option) => option.name));
-                for (const vote of votes as CastVote<MultipleChoiceVote>[]) {
-                    for (const choice of vote.vote.choices) total[choice] += vote.value;
-                }
-                return total;
-            }
-            case VoteTypes.weightedChoices: {
-                const total = create(config.options!.map((option) => option.name));
-                for (const vote of votes as CastVote<WeightedCoicesVote>[]) {
-                    const totalWeight = voteTotalWeight(vote.vote.choices);
-                    for (const choice of vote.vote.choices) {
-                        total[choice.name] += (choice.weight / totalWeight) * vote.value;
-                    }
-                }
-                return total;
-            }
-            default: throw new Error(`Type "${config.type} is not implemented!"`);
-        }
-    }
-
     async countVotes(config = this.config!): Promise<ElectionResults> {
-        const txs = await this.client?.getTransactionsByAddress(voteAddress, config?.start);
-
-        const decoder = new TextDecoder();
+        const client = this.client!;
+        const height = await client.getHeadHeight();
+        const end = Math.min(config.end, height);
+        const address = voteAddress.replace(' ', '');
         const votes: CastVote<BaseVote>[] = [];
-        txs!.forEach((tx: Nimiq.ClientTransactionDetails) => {
+        const addresses: string[] = [];
+        const stats: any = {};
+
+        if (height === this.lastCounted) throw new Error(`Counted block height ${height} already.`);
+        this.lastCounted = height;
+
+        console.log('counting votes: find all votes', config);
+        const start = new Date().getTime();
+
+        // find all votes
+        (await findTxBetween(address, config.start, end, testnet)).forEach((tx) => {
+            if (addresses.includes(tx.sender)) return; // ignore older ones
             try {
-                const serialized = decoder.decode(tx.data.raw);
-                const vote = parseVote(serialized, config.type);
-                const { value } = tx;
-                console.log('Parsed TX', tx.transactionHash, serialized, vote);
-                if (vote.name === config.name) votes.push({ vote, value });
-            } catch { /* ignore malformatted votes */ }
+                const { data, sender, value, height } = tx;
+                const vote = parseVote(data, config.type);
+                if (vote.name === config.name) {
+                    votes.push({ vote, tx: { sender, value, height }, value: 0 });
+                    addresses.push(tx.sender);
+                }
+                console.log('tx', tx, vote);
+            } catch { /* ignore malformatted votes and other, unrelated TX */ }
         });
 
-        const total = this.sumUpElectionResults(votes, config);
+        stats.votes = votes.length;
+        console.log('counting votes: calculate balance', new Date().getTime() - start, addresses, votes);
 
-        if (config.type === VoteTypes.yesNo) {
-            return {
-                label: config.label || config.name,
-                results: [{
-                    label: 'Yes / Agree',
-                    value: total[YesNo.yes],
-                }, {
-                    label: 'No / Disagree',
-                    value: total[YesNo.no],
-                }],
-            };
+        // calculate account balance at config.end height and store it in vote.value
+        for (const vote of votes) {
+            const { sender } = vote.tx;
+            vote.value = (await client.getAccount(sender))?.balance;
+            if (height > config.end) {
+                (await findTxBetween(sender, end, height, testnet)).forEach((tx) => {
+                    if (tx.recipient === sender) vote.value -= tx.value;
+                    if (tx.sender === sender) vote.value += tx.value;
+                });
+            }
         }
-        const results: ElectionResult[] = config.options!.map((choice) => ({
-            label: choice.label || choice.name,
-            value: total[choice.name],
-        }));
+
+        stats.nim = votes.map((v) => v.value).reduce((v1, v2) => v1 + v2, 0);
+        console.log('counting votes: summarize', new Date().getTime() - start, votes);
+
+        // summarize votes
+        const sum = new Map<string, number>(config.choices.map((choice) => [choice.name, 0]));
+        const votesPerChoice = new Map<string, ElectionVote[]>(config.choices.map((choice) => [choice.name, []]));
+        for (const vote of votes) {
+            console.log(vote);
+            const total = voteTotalWeight(vote.vote.choices);
+            for (const choice of vote.vote.choices) {
+                const old = sum.get(choice.name);
+                if (old !== undefined) { // a choice that is not configured
+                    console.log(choice.name, old + (choice.weight / total) * vote.value, choice.weight, vote.value);
+                    const value = (choice.weight / total) * vote.value;
+                    sum.set(choice.name, old + value);
+                    votesPerChoice.get(choice.name)!.push({ sender: vote.tx.sender, height: vote.tx.height, value });
+                }
+            }
+        }
+
+        console.log('counting votes: return', new Date().getTime() - start, sum, votesPerChoice);
+
+        // format result
         return {
             label: config.label || config.name,
-            results,
+            results: config.choices.map((choice) => ({
+                label: choice.label || choice.name,
+                value: sum.get(choice.name)!,
+                votes: votesPerChoice.get(choice.name)!,
+            })).sort((a, b) => b.value - a.value), // highest first
+            stats,
         };
     }
 
+    async countPreliminaryVotes() {
+        this.currentResults = await this.countVotes(this.config!);
+    }
+
+    // voting
     get type(): VoteTypes | undefined {
         return this.config?.type;
     }
 
     get totalWeight(): number {
-        return voteTotalWeight(this.options);
+        return voteTotalWeight(this.choices);
+    }
+
+    get canVote(): boolean {
+        switch (this.config!.type) {
+            case VoteTypes.singleChoice: return !!this.singleChoice;
+            case VoteTypes.multipleChoice: return this.multipleChoices.length > 0;
+            default: return true;
+        }
+    }
+
+    // current results
+    get pixelPerNIM(): number {
+        return this.maxWidth / this.maxChoiceValue;
+    }
+
+    get maxWidth(): number {
+        console.log('maxWidth', this.$refs);
+        const maxVotes = this.currentResults!.results.map((result) => result.votes.length).sort((a, b) => b - a)[0];
+        return (this.$refs.results as HTMLElement)?.offsetWidth - 70 - maxVotes * 2;
+    }
+
+    get maxChoiceValue(): number {
+        return this.currentResults!.results.map((result) => result.value).sort((a, b) => b - a)[0];
+    }
+
+    color(address: string): string {
+        const index = stringHash(address) % this.colors.length;
+        return this.colors[index];
     }
 }

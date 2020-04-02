@@ -6,3 +6,27 @@
 #app > *
   margin-left auto
   margin-right auto
+
+.results .vote
+  // border .5px solid var(--nimiq-card-bg)
+  height 2em
+  overflow hidden
+  display inline-block
+  // border-radius 3px
+  min-width 2px
+
+.quote
+  text-align center
+  font-weight bold
+  font-size 120%
+  &:before
+    content '“'
+  &:after
+    content '”'
+
+.choices
+  padding 1em 0
+
+  .choice label
+    min-width 10em
+    display inline-block

@@ -1,43 +1,53 @@
 #app(v-if='loading') loading...
+#app(v-else-if='error') Oh oh! {{ error }}
 #app(v-else)
-    .debugging(v-if='test')
+    .debugging(v-if='debug')
         div Loading {{ loading }}
         div VoteType {{ VoteTypes }}
         div VoteTypes.weightedChoices {{ VoteTypes.weightedChoices }}
         div type {{ type }}
         div === {{ type == VoteTypes.weightedChoices }}
         div config {{ config }}
-        div yesVote {{ yesVote }}
+        div height {{ height }}
+        div choices {{ choices }}
         div consensus {{ consensus }}
-        div test {{ test }}
+        div testnet {{ testnet }}, debug {{ debug }}, dummies {{ dummies }}
         div voted {{ voted }}
+        div results {{ currentResults }}
 
     .nq-card(v-if='config && !voted')
-        .nq-card-header Voting
+        .nq-card-header
+            h1 Voting
+            | Make your voice heard and shape the future of Nimiq
         .nq-card-body
-            .yesno(v-if='type === VoteTypes.yesNo')
-                input.radio(id='voteYes' value='yes' v-model='yesVote')
-                label(for='voteYes') yes / agree
-                input.radio(id='voteNo' value='no' v-model='yesVote')
-                label(for='voteNo') no / disagree
-            .options(v-if='type === VoteTypes.multipleChoice')
-                .option(v-for='option of options')
-                    input.check(:id='option.name' type='checkbox' value='1' v-model='option.value')
-                    label(:for='option.name') {{ option.label }}
-            .options(v-if='type === VoteTypes.weightedChoices')
-                .option(v-for='option of options' :key='option.name')
-                    label(:for='option.name') {{ option.label }} ({{ Math.round(100 * option.weight / totalWeight) }}%)
-                    input.slider(:id='option.name' type='range' min='0' max='99' v-model.number='option.weight')
-            button.nq-button(@click='submitVote' :disabled='!consensus') {{ consensus ? 'vote' : 'waiting for consensus' }}
+            .quote {{ config.label || config.name }}
+            .choices.nq-text(v-if='type === VoteTypes.singleChoice')
+                | Choose one:
+                .choice(v-for='choice of choices' :key='choice.name')
+                    input.radio(:id='choice.name' name='sc' type='radio' :value='choice.name' v-model='singleChoice')
+                    label(:for='choice.name') {{ choice.label }}
+            .choices(v-if='type === VoteTypes.multipleChoice')
+                | Multiple choices:
+                .choice(v-for='choice of choices' :key='choice.name')
+                    input.check(:id='choice.name' type='checkbox' :value='choice.name' v-model='multipleChoices')
+                    label(:for='choice.name') {{ choice.label }}
+            .choices(v-if='type === VoteTypes.weightedChoices')
+                | Weigh your choices:
+                .choice(v-for='choice of choices' :key='choice.name')
+                    label(:for='choice.name') {{ choice.label }} ({{ Math.round(100 * choice.weight / totalWeight) }}%)
+                    input.slider(:id='choice.name' type='range' min='0' max='99' v-model.number='choice.weight')
+            button.nq-button(@click='submitVote' :disabled='!height || !canVote') {{ height ? 'vote' : 'waiting for chain height' }}
 
     .nq-card(v-if='config && voted')
-        .nq-card-header Thanks for voting!
+        .nq-card-header
+            h1 Thank you for voting!
+            | You helped shaping the future of Nimiq!
         .nq-card-body
-            p Thank you for making your voice heard when it comes to the future of Nimiq!
             p Your vote as recorded on the blockchain: #[br] {{ voted.vote }}
+            p It will become visible with the next few blocks.
             p.
                 You can verify your vote on
-                #[a(:href='`http://nimiq.watch/#${voted.hash}`') nimiq.watch].
+                #[a(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${voted.hash}`') nimiq.watch].
             p
                 small.
                     Note: if you got the message "That transaction of block can not be found.",
@@ -47,12 +57,30 @@
         .nq-card-header Currently no voting
         .nq-card-body Find out more about Nimiq at #[a(href='https://nimiq.com') nimiq.com].
 
-    .nq-card(v-if='config')
-        .nq-card-header Results of currently ongoing voting
+    .nq-card(v-if='config' ref='results')
+        .nq-card-header
+            h1 Preliminary results
+            | Estimated results of currently ongoing voting
         .nq-card-body(v-if='!currentResults') loading...
+        .nq-card-body(v-else-if='!currentResults.stats.votes') No results yet. Be the first one to vote!
         .nq-card-body(v-else)
-            p {{ currentResults.label }}
-            p(v-for='result of currentResults.results') {{ result.label}}: {{ Math.round(result.value * 100) }}%.
+            //- p.title {{ currentResults.label }}
+            section.results
+                .result(v-for='result of currentResults.results')
+                    //- | result - {{ result }} -
+                    | {{ result.label}}: {{ Math.round(result.value / currentResults.stats.nim * 100) }}%.
+                    //- | max {{ maxWidth }}px {{ maxChoiceValue }}NIM
+                    .votes
+                        .vote(v-for='vote of result.votes'
+                            :title='`${vote.sender} - ${Math.round(vote.value / 100000)}NIM`'
+                            :style='`background: ${color(vote.sender)}; width: ${vote.value * pixelPerNIM}px;`')
+                            //- | {{ vote.value * pixelPerNIM }}px for {{ vote.value }}NIM
+                            //- .test(:style='`background: ${color(vote.sender)}; width: ${vote.value * pixelPerNIM}px; overflow: hidden;`') {{ vote.sender }} {{ vote.height }}
+            p.stats.
+                In total, {{ currentResults.stats.votes }} votes were casted representing
+                {{ Math.round(currentResults.stats.nim / 100000) }} NIM.
+            p
+                button.nq-button-pill(@click='countPreliminaryVotes()' :disabled='height <= lastCounted') refresh
         .nq-card-footer
 
     .nq-card(v-if='past.length > 0')
