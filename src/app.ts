@@ -24,6 +24,12 @@ Vue.mixin({
     },
 });
 
+type Error = {
+    message: string,
+    solution: string,
+    reason: string,
+}
+
 const appLogo = `${window.location.origin}/android-icon-192x192.png`;
 
 @Component({ components: {} })
@@ -46,7 +52,7 @@ export default class App extends Vue {
     voted: Receipt | null = null;
     resultsConfig: Config | null = null; // current results showing
     currentResults: ElectionResults | null = null;
-    error = '';
+    error: Error | null = null;
     colors: any;
 
     async created() {
@@ -60,9 +66,12 @@ export default class App extends Vue {
             this.height = (await watchApi('latest/1', testnet))[0].height;
         } catch (e) {
             if (!this.configs || !this.height) {
-                console.log('Loading voting app: Failed to configuration', this.configs, this.height, e);
-                this.error = 'Something went wrong loading. Are you offline? Adblocker enabled? '
-                             + `Maybe have a look and reload.\n\nReason: ${e}`;
+                console.log('Loading voting app: Loading configuration failed', this.configs, this.height, e);
+                this.error = {
+                    message: 'Something went wrong loading the configuration files.',
+                    solution: 'Are you offline? Adblocker enabled? Maybe have a look and reload.',
+                    reason: e,
+                };
                 return;
             }
         }
@@ -108,8 +117,11 @@ export default class App extends Vue {
             console.log(e);
             // if (e.message !== 'GenesisConfig already initialized') {
             if (!this.configs || !this.client || !this.height) {
-                this.error = 'Something went wrong loading. Are you offline? Adblocker enabled? '
-                             + `Maybe have a look and reload.\n\nReason: ${e}`;
+                this.error = {
+                    message: 'Something went wrong loading the Nimiq API.',
+                    solution: 'Are you offline? Adblocker enabled? Maybe have a look and reload.',
+                    reason: e,
+                };
                 // window.document.location.reload();
                 return;
             }

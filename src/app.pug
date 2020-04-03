@@ -1,5 +1,9 @@
-#app(v-if='loading') loading...
-#app(v-else-if='error') Oh oh! {{ error }}
+#app.error(v-if='error')
+    h1 Oh oh, An error occured!
+    p.message What happend: {{ error.message }}
+    p.solution What you can do: {{ error.solution }}
+    p.reason Error message: {{ error.reason }}
+#app.loading(v-else-if='loading') loading...
 #app(v-else)
     .debugging(v-if='debug')
         div testnet {{ testnet }}, debug {{ debug }}, dummies {{ dummies }}
