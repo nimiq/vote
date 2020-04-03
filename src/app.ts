@@ -132,7 +132,7 @@ export default class App extends Vue {
         console.log('Loading voting app: Loaded Nimiq', new Date().getTime() - start, client);
 
         await client.waitForConsensusEstablished();
-        if (this.votingConfig) await this.showPreliminaryVotes();
+        if (this.votingConfig && !this.currentResults) await this.showPreliminaryVotes();
 
         console.log('Loading voting app: Counted votes',
             new Date().getTime() - start,
@@ -142,7 +142,7 @@ export default class App extends Vue {
 
     @Watch('currentResults')
     makeColors() {
-        const colors = this.currentResults?.stats.votes || 20;
+        const colors = Math.min(this.currentResults?.stats.votes || 20, 100);
         console.log(`Making ${colors} beautiful colors...`);
         this.colors = distinctColors({
             count: colors,

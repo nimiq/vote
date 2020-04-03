@@ -86,9 +86,9 @@
                 In total, {{ currentResults.stats.votes }} votes were casted representing
                 {{ Math.round(currentResults.stats.nim / 100000) }} NIM.
             p(v-if='isPreliminary')
-                button.nq-button-pill(@click='countPreliminaryVotes()' :disabled='height <= lastCounted') refresh
+                button.nq-button-pill(@click='showPreliminaryVotes()' :disabled='height <= lastCounted') refresh
             p(v-else-if='votingConfig')
-                button.nq-button-pill(@click='countPreliminaryVotes()') show preliminary results of current voting
+                button.nq-button-pill(@click='showPreliminaryVotes()') show preliminary results of current voting
         .nq-card-footer
 
     .nq-card(v-if='pastVotings.length > 0')
