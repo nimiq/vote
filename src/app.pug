@@ -19,6 +19,7 @@
             | Make your voice heard and shape the future of Nimiq
         .nq-card-body
             .quote {{ votingConfig.label || votingConfig.name }}
+            .time.note Time remaining: {{ timeRemaining }}.
             .choices.nq-text(v-if='type === VoteTypes.singleChoice')
                 | Choose one:
                 .choice(v-for='choice of choices' :key='choice.name')
@@ -46,10 +47,9 @@
             p.
                 You can verify your vote on
                 #[a(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${voted.hash}`') nimiq.watch].
-            p
-                small.
-                    Note: if you got the message "That transaction of block can not be found.",
-                    that means you have to wait for the next block for your vote to be mined by the network.
+            p.note.
+                Note: if you got the message "That transaction of block can not be found.",
+                that means you have to wait for the next block for your vote to be mined by the network.
 
     .nq-card(v-else-if='!votingConfig')
         .nq-card-header Currently no voting

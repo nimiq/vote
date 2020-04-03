@@ -303,6 +303,15 @@ export default class App extends Vue {
         }
     }
 
+    get timeRemaining(): string {
+        const blocks = this.votingConfig!.end - this.height;
+        const days = Math.floor(blocks / (24 * 60));
+        const hours = Math.floor((blocks - days * 24 * 60) / 60);
+        const minutes = blocks - (days * 24 + hours) * 60;
+        // return `${hours}:${minutes < 10 ? `0${minutes}` : minutes}`;
+        return `${blocks} block, approx. ${days} days, ${hours} hours and ${minutes} minutes`;
+    }
+
     // current results
     get pixelPerNIM(): number {
         return this.maxWidth / this.maxChoiceValue;
