@@ -82,7 +82,7 @@ export function serializeVote(
     prefix = 'Vote',
 ): string {
     if (prefix === 'Vote') {
-        return `${prefix}_${vote.name}_${serializeChoice(vote, type, prefix)}`;
+        return [prefix, vote.name, serializeChoice(vote, type, prefix)].join(ELEMENT_SEPARATOR);
     }
     throw new Error(`Format "${prefix} not supported.`);
 }
