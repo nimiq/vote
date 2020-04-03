@@ -67,7 +67,7 @@ export default class App extends Vue {
             }
         }
 
-        console.log('Loading voting app: Loaded config', new Date().getTime() - start, this.height, this.votingConfig);
+        console.log('Loading voting app: Loaded config', new Date().getTime() - start, this.height, this.configs);
 
         // parse config
         const { configs, height, choices } = this;

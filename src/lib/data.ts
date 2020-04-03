@@ -20,6 +20,6 @@ export async function loadConfig(): Promise<Array<Config>> {
 
 export async function loadResults(config: Config): Promise<ElectionResults> {
     return !dummies
-        ? fetchJson(`${votingLocation}${config!.results}`)
+        ? fetchJson(`${votingLocation}${config!.results}.json`)
         : dummyResult;
 }
