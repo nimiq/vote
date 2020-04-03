@@ -33,22 +33,18 @@ export async function findTxBetween(
     const page = 100;
     const voteTxs: Tx[] = [];
     for (let skip = 0; ; skip += page) {
-        // eslint-disable-next-line
-        const txs: any[] = (await watchApi(`account-transactions/${address}/${page}/${skip}`, test));
-        if (txs[0].block_height > maxHeight) continue;
-        console.log(skip, txs.map((tx) => ({ tx, data: atob(tx.data) })));
-        txs.filter((tx) => tx.block_height >= minHeight && tx.block_height <= maxHeight)
-            .reverse() // newest first
-            .forEach((tx) => {
-                voteTxs.push({
-                    sender: tx.sender_address,
-                    recipient: tx.receiver_address,
-                    value: tx.value,
-                    data: atob(tx.data),
-                    height: tx.block_height,
-                });
-            });
-        if (txs.length < 1 || txs[0].block_height < minHeight) break; // done
+        const txs: any[] = ((await watchApi(`account-transactions/${address}/${page}/${skip}`, test)) as any[])
+            .sort((a, b) => b.block_height - a.block_height); // newest/highest first
+        if (txs[txs.length - 1]?.block_height > maxHeight) continue; // looking for older TX
+        // console.log(skip, txs.map((tx) => ({ tx, data: atob(tx.data) })));
+        txs.filter((tx) => tx.block_height >= minHeight && tx.block_height <= maxHeight).forEach((tx) => voteTxs.push({
+            sender: tx.sender_address,
+            recipient: tx.receiver_address,
+            value: tx.value,
+            data: atob(tx.data),
+            height: tx.block_height,
+        }));
+        if (txs[txs.length - 1]?.block_height < minHeight) break; // done
     }
     return voteTxs;
 }
