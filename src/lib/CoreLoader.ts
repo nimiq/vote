@@ -42,9 +42,10 @@ export async function loadNimiqCoreOnly(): Promise<Nimiq> {
                 $script.src = `${coreBasePath}${coreVariant}.js`;
                 $head.appendChild($script);
             })
-            .catch(() => {
-                alert('Nimiq didn\'t load. Check your internet connection, disable adblocks and then try again.');
-                reject();
+            .catch((reason) => {
+                const message = `Nimiq didn't load. Check your internet connection, disable Adblockers and try again.
+                                 \nReason: ${reason}`;
+                reject(new Error(message));
             });
     }).then(
         () => {

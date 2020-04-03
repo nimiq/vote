@@ -10,7 +10,7 @@ import { loadNimiqCoreOnly, loadNimiqWithCryptography } from './lib/CoreLoader';
 import { serializeVote, parseVote, voteTotalWeight } from './lib/votes';
 import { loadConfig, loadResults } from './lib/data';
 import { findTxBetween, watchApi } from './lib/network';
-import { testnet } from './lib/const';
+import { testnet, debug, voteAddress, dummies } from './lib/const';
 
 const distinctColors = require('distinct-colors').default;
 
@@ -24,10 +24,6 @@ Vue.mixin({
     },
 });
 
-// const testnet = window.location.href.includes('localhost') || window.location.href.includes('testnet');
-const dummies = true;
-const debug = false;
-const voteAddress = 'NQ07 0000 0000 0000 0000 0000 0000 0000 0000';
 const appLogo = `${window.location.origin}/android-icon-192x192.png`;
 
 @Component({ components: {} })
@@ -217,6 +213,7 @@ export default class App extends Vue {
         (await findTxBetween(address, config.start, end, testnet)).forEach((tx) => {
             if (addresses.includes(tx.sender)) return; // ignore older ones
             try {
+                // eslint-disable-next-line
                 const { data, sender, value, height } = tx;
                 const vote = parseVote(data, config.type);
                 if (vote.name === config.name) {
