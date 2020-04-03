@@ -1,55 +1,18 @@
 import '@nimiq/style/nimiq-style.min.css';
 import '@nimiq/vue-components/dist/NimiqVueComponents.css';
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue, Watch } from 'vue-property-decorator';
 import HubApi from '@nimiq/hub-api';
 import stringHash from 'string-hash';
 
+import { BaseVote, VoteTypes, BaseChoice, Config, Option, Receipt, ElectionResults, CastVote, ElectionVote }
+    from './lib/types';
 import { loadNimiqCoreOnly, loadNimiqWithCryptography } from './lib/CoreLoader';
-import { serializeVote, parseVote, voteTotalWeight, BaseVote, VoteTypes, BaseChoice } from './lib/votes';
-import { loadConfig, Config } from './config';
-import { findTxBetween, fetchJson, Tx, watchApi } from './lib/network';
+import { serializeVote, parseVote, voteTotalWeight } from './lib/votes';
+import { loadConfig, loadResults } from './lib/data';
+import { findTxBetween, watchApi } from './lib/network';
+import { testnet } from './lib/const';
 
 const distinctColors = require('distinct-colors').default;
-
-type Option = BaseChoice & {
-    label: string,
-}
-
-type Receipt = {
-    hash: string,
-    vote: string,
-}
-
-type CastVote<T extends BaseVote> = {
-    vote: T,
-    tx: {
-        sender: string,
-        value: number,
-        height: number,
-    },
-    value: number,
-}
-
-type ElectionVote = {
-    sender: string,
-    value: number,
-    height: number,
-}
-
-type ElectionResult = {
-    label: string,
-    value: number,
-    votes: ElectionVote[],
-}
-
-type ElectionResults = {
-    label: string,
-    results: ElectionResult[],
-    stats: {
-        votes: number,
-        nim: number,
-    },
-}
 
 Vue.mixin({
     created() {
@@ -62,10 +25,8 @@ Vue.mixin({
 });
 
 // const testnet = window.location.href.includes('localhost') || window.location.href.includes('testnet');
-const testnet = false;
 const dummies = true;
 const debug = false;
-const configAddress = `https://nimiq.community/voting.${testnet ? 'test' : 'live'}.json`;
 const voteAddress = 'NQ07 0000 0000 0000 0000 0000 0000 0000 0000';
 const appLogo = `${window.location.origin}/android-icon-192x192.png`;
 
@@ -74,10 +35,10 @@ export default class App extends Vue {
     loading = true;
     choices: Option[] = [];
     configs: Array<Config> = [];
-    config: Config | null = null; // active one
+    votingConfig: Config | null = null; // current voting
     singleChoice: string = '';
     multipleChoices: string[] = [];
-    past: Array<Config> = [];
+    pastVotings: Array<Config> = [];
     client?: Nimiq.Client;
     consensus = false;
     height = 0;
@@ -87,27 +48,30 @@ export default class App extends Vue {
     dummies = dummies;
     private hub: HubApi = new HubApi(testnet ? 'https://hub.nimiq-testnet.com' : 'https://hub.nimiq.com');
     voted: Receipt | null = null;
+    resultsConfig: Config | null = null; // current results showing
     currentResults: ElectionResults | null = null;
     error = '';
-    colors = distinctColors().map((color: any) => color.hex());
+    colors: any;
 
     async created() {
         (window as any).app = this;
         const start = new Date().getTime();
 
         // load config and block height
-        console.log('creating');
+        console.log('Loading voting app');
         try {
-            this.configs = await loadConfig(configAddress, dummies);
+            this.configs = await loadConfig();
             this.height = (await watchApi('latest/1', testnet))[0].height;
         } catch (e) {
             if (!this.configs || !this.height) {
-                console.log('Failed to load', this.configs, this.height, e);
+                console.log('Loading voting app: Failed to configuration', this.configs, this.height, e);
                 this.error = 'Something went wrong loading. Are you offline? Adblocker enabled? '
                              + `Maybe have a look and reload.\n\nReason: ${e}`;
                 return;
             }
         }
+
+        console.log('Loading voting app: Loaded config', new Date().getTime() - start, this.height, this.votingConfig);
 
         // parse config
         const { configs, height, choices } = this;
@@ -116,8 +80,8 @@ export default class App extends Vue {
         if (activeConfigs.length > 1) {
             throw new Error('Voting misconfigurated, more than one voting happing at the same time.');
         } else if (activeConfigs.length === 1) {
-            [this.config] = activeConfigs;
-            const { config } = this;
+            [this.votingConfig] = activeConfigs;
+            const { votingConfig: config } = this;
             if (config.choices) {
                 for (const choice of config.choices) {
                     choices.push({
@@ -128,11 +92,11 @@ export default class App extends Vue {
                 }
             } else throw new Error('No choices for this voting found.');
         }
-        this.past = this.configs.filter((config) => config.end <= height);
+        this.pastVotings = this.configs.filter((config) => config.end <= height && config.results);
 
+        console.log('Loading voting app: Parsed config', new Date().getTime() - start, this.choices);
         this.loading = false;
-
-        console.log('loaded config', new Date().getTime() - start, this.height, this.config, this.choices);
+        this.makeColors();
 
         try {
             const Nimiq = await loadNimiqCoreOnly();
@@ -154,25 +118,47 @@ export default class App extends Vue {
                 return;
             }
         }
-        const { client } = this;
 
+        const { client } = this;
         client.addConsensusChangedListener((state) => {
             this.consensus = state === Nimiq.Client.ConsensusState.ESTABLISHED;
         });
         client.addHeadChangedListener(async () => {
             this.height = await client.getHeadHeight();
+            if (this.votingConfig?.end === this.height) {
+                const results = await this.showPreliminaryVotes();
+                console.warn(`Voting results for ${this.votingConfig.name}:`);
+                console.log(JSON.stringify(results));
+                console.log(results);
+            }
         });
 
-        console.log('loaded Nimiq', new Date().getTime() - start, client);
+        console.log('Loading voting app: Loaded Nimiq', new Date().getTime() - start, client);
 
         await client.waitForConsensusEstablished();
-        if (this.config) await this.countPreliminaryVotes();
+        if (this.votingConfig) await this.showPreliminaryVotes();
 
-        console.log('counted votes', new Date().getTime() - start, JSON.stringify(this.currentResults, null, '  '));
+        console.log('Loading voting app: Counted votes',
+            new Date().getTime() - start,
+            JSON.stringify(this.currentResults, null, '  '),
+        );
+    }
+
+    @Watch('currentResults')
+    makeColors() {
+        const colors = this.currentResults?.stats.votes || 20;
+        console.log(`Making ${colors} beautiful colors...`);
+        this.colors = distinctColors({
+            count: colors,
+            lightMin: 70,
+            lightMax: 100,
+            chromaMin: 40,
+            chromaMax: 50,
+        }).map((color: any) => color.hex());
     }
 
     serializeChoices(): BaseChoice[] {
-        const { type } = this.config!;
+        const { type } = this.votingConfig!;
         switch (type) {
             case VoteTypes.singleChoice:
                 return [{ name: this.singleChoice, weight: 1 }];
@@ -192,7 +178,7 @@ export default class App extends Vue {
     }
 
     async submitVote() {
-        const { config, hub, height } = this;
+        const { votingConfig: config, hub, height } = this;
         const vote = serializeVote({ name: config!.name, choices: this.serializeChoices() }, config!.type);
         console.log('Submitted vote:', vote);
         console.log('parsed', parseVote(vote, config!.type));
@@ -212,7 +198,7 @@ export default class App extends Vue {
         };
     }
 
-    async countVotes(config = this.config!): Promise<ElectionResults> {
+    async countVotes(config = this.votingConfig!): Promise<ElectionResults> {
         const client = this.client!;
         const height = await client.getHeadHeight();
         const end = Math.min(config.end, height);
@@ -290,13 +276,22 @@ export default class App extends Vue {
         };
     }
 
-    async countPreliminaryVotes() {
-        this.currentResults = await this.countVotes(this.config!);
+    async showPreliminaryVotes(): Promise<ElectionResults> {
+        if (!this.votingConfig) throw new Error('No on-going voting.');
+        this.currentResults = await this.countVotes(this.votingConfig);
+        this.resultsConfig = this.votingConfig;
+        return this.currentResults;
+    }
+
+    async showPastVoting(config: Config) {
+        if (!config?.results) throw new Error(`No results file provided for ${config?.name}`);
+        this.resultsConfig = config;
+        this.currentResults = await loadResults(config);
     }
 
     // voting
     get type(): VoteTypes | undefined {
-        return this.config?.type;
+        return this.votingConfig?.type;
     }
 
     get totalWeight(): number {
@@ -304,7 +299,7 @@ export default class App extends Vue {
     }
 
     get canVote(): boolean {
-        switch (this.config!.type) {
+        switch (this.votingConfig!.type) {
             case VoteTypes.singleChoice: return !!this.singleChoice;
             case VoteTypes.multipleChoice: return this.multipleChoices.length > 0;
             default: return true;
@@ -316,14 +311,35 @@ export default class App extends Vue {
         return this.maxWidth / this.maxChoiceValue;
     }
 
+    readonly minBarItemWidth = .5;
+    get percentPerLuna(): number {
+        return (100 - this.maxVoteCount * this.minBarItemWidth) / this.maxChoiceValue;
+    }
+
+    get maxVoteCount(): number {
+        return this.currentResults!.results
+            .map((result) => result.votes.length)
+            .reduce((a, b) => Math.max(a, b));
+    }
+
     get maxWidth(): number {
         console.log('maxWidth', this.$refs);
-        const maxVotes = this.currentResults!.results.map((result) => result.votes.length).sort((a, b) => b - a)[0];
+        // const maxVotes = this.currentResults!.results.map((result) => result.votes.length).sort((a, b) => b - a)[0];
+        const maxVotes = this.currentResults!.results
+            .map((result) => result.votes.length)
+            .reduce((a, b) => Math.max(a, b));
         return (this.$refs.results as HTMLElement)?.offsetWidth - 70 - maxVotes * 2;
     }
 
     get maxChoiceValue(): number {
-        return this.currentResults!.results.map((result) => result.value).sort((a, b) => b - a)[0];
+        // return this.currentResults!.results.map((result) => result.value).sort((a, b) => b - a)[0];
+        return this.currentResults!.results
+            .map((result) => result.value)
+            .reduce((a, b) => Math.max(a, b));
+    }
+
+    get isPreliminary(): boolean {
+        return !this.resultsConfig?.results;
     }
 
     color(address: string): string {

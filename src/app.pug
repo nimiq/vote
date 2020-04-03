@@ -2,25 +2,23 @@
 #app(v-else-if='error') Oh oh! {{ error }}
 #app(v-else)
     .debugging(v-if='debug')
-        div Loading {{ loading }}
-        div VoteType {{ VoteTypes }}
-        div VoteTypes.weightedChoices {{ VoteTypes.weightedChoices }}
-        div type {{ type }}
-        div === {{ type == VoteTypes.weightedChoices }}
-        div config {{ config }}
-        div height {{ height }}
-        div choices {{ choices }}
-        div consensus {{ consensus }}
         div testnet {{ testnet }}, debug {{ debug }}, dummies {{ dummies }}
+        div Loading {{ loading }}
+        div height {{ height }}
+        div consensus {{ consensus }}
+        div votingConfig {{ votingConfig }}
+        div type {{ type }}
+        div choices {{ choices }}
         div voted {{ voted }}
+        div resultsConfig {{ resultsConfig }}
         div results {{ currentResults }}
 
-    .nq-card(v-if='config && !voted')
+    .nq-card(v-if='votingConfig && !voted')
         .nq-card-header
             h1 Voting
             | Make your voice heard and shape the future of Nimiq
         .nq-card-body
-            .quote {{ config.label || config.name }}
+            .quote {{ votingConfig.label || votingConfig.name }}
             .choices.nq-text(v-if='type === VoteTypes.singleChoice')
                 | Choose one:
                 .choice(v-for='choice of choices' :key='choice.name')
@@ -38,7 +36,7 @@
                     input.slider(:id='choice.name' type='range' min='0' max='99' v-model.number='choice.weight')
             button.nq-button(@click='submitVote' :disabled='!height || !canVote') {{ height ? 'vote' : 'waiting for chain height' }}
 
-    .nq-card(v-if='config && voted')
+    .nq-card(v-else-if='votingConfig && voted')
         .nq-card-header
             h1 Thank you for voting!
             | You helped shaping the future of Nimiq!
@@ -53,37 +51,49 @@
                     Note: if you got the message "That transaction of block can not be found.",
                     that means you have to wait for the next block for your vote to be mined by the network.
 
-    .nq-card(v-if='!config')
+    .nq-card(v-else-if='!votingConfig')
         .nq-card-header Currently no voting
         .nq-card-body Find out more about Nimiq at #[a(href='https://nimiq.com') nimiq.com].
 
-    .nq-card(v-if='config' ref='results')
-        .nq-card-header
+    .nq-card(v-else-if='votingConfig.end <= height')
+        .nq-card-header Voting ended
+        .nq-card-body The results will now be calculated and then made available here.
+
+    .nq-card(v-if='resultsConfig' ref='results')
+        .nq-card-header(v-if='isPreliminary')
             h1 Preliminary results
             | Estimated results of currently ongoing voting
+        .nq-card-header(v-else)
+            h1 Voting results
+            | {{ resultsConfig.label || resultsConfig.name }}
         .nq-card-body(v-if='!currentResults') loading...
-        .nq-card-body(v-else-if='!currentResults.stats.votes') No results yet. Be the first one to vote!
+        .nq-card-body(v-else-if='!currentResults.stats.votes')
+            span(v-if='isPreliminary') No results yet. Be the first one to vote!
+            span(v-else) No votes were recorded in this election.
         .nq-card-body(v-else)
             //- p.title {{ currentResults.label }}
             section.results
                 .result(v-for='result of currentResults.results')
-                    //- | result - {{ result }} -
                     | {{ result.label}}: {{ Math.round(result.value / currentResults.stats.nim * 100) }}%.
-                    //- | max {{ maxWidth }}px {{ maxChoiceValue }}NIM
+                    .debug(v-if='debug') maxVoteCount {{ maxVoteCount }}, maxValue: {{ maxChoiceValue }}Luna, percentPerLuna {{ percentPerLuna }}%, minWidth {{ minBarItemWidth }}
                     .votes
                         .vote(v-for='vote of result.votes'
-                            :title='`${vote.sender} - ${Math.round(vote.value / 100000)}NIM`'
-                            :style='`background: ${color(vote.sender)}; width: ${vote.value * pixelPerNIM}px;`')
-                            //- | {{ vote.value * pixelPerNIM }}px for {{ vote.value }}NIM
-                            //- .test(:style='`background: ${color(vote.sender)}; width: ${vote.value * pixelPerNIM}px; overflow: hidden;`') {{ vote.sender }} {{ vote.height }}
+                            :title='`${vote.sender} - ${Math.round(vote.value / 100000)}NIM - ${vote.value * percentPerLuna}%`'
+                            :style='`background: ${color(vote.sender)}; flex-grow: ${minBarItemWidth + vote.value * percentPerLuna};`')
+                        //- | ({{maxChoiceValue}} - {{result.value}}) * {{percentPerLuna}} = {{(maxChoiceValue - result.value) * percentPerLuna}}
+                        .vote(:style='`flex-grow: ${(maxChoiceValue - result.value) * percentPerLuna}`')
             p.stats.
                 In total, {{ currentResults.stats.votes }} votes were casted representing
                 {{ Math.round(currentResults.stats.nim / 100000) }} NIM.
-            p
+            p(v-if='isPreliminary')
                 button.nq-button-pill(@click='countPreliminaryVotes()' :disabled='height <= lastCounted') refresh
+            p(v-else-if='votingConfig')
+                button.nq-button-pill(@click='countPreliminaryVotes()') show preliminary results of current voting
         .nq-card-footer
 
-    .nq-card(v-if='past.length > 0')
+    .nq-card(v-if='pastVotings.length > 0')
         .nq-card-header Past results
         .nq-card-body
+            .past-voting(v-for='past of pastVotings')
+                a.nq-link(@click='showPastVoting(past)') {{ past.label || past.name }}
         .nq-card-footer

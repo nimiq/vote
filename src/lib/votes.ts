@@ -1,48 +1,5 @@
 import { unique } from 'typescript-array-utils';
-
-export enum VoteTypes {
-    // yesNo = 'yesNo',
-    singleChoice = 'singleChoice',
-    multipleChoice = 'multipleChoice',
-    weightedChoices = 'weightedChoices',
-}
-
-export type BaseChoice = {
-    name: string,
-    weight: number,
-}
-
-export type BaseVote = {
-    name: string,
-    choices: BaseChoice[],
-}
-
-// export enum YesNo {
-//     no = 'no',
-//     yes = 'yes',
-// }
-
-export type FixedChoice = {
-    name: string,
-    weight: 1,
-}
-
-export type WeightedChoice = {
-    name: string,
-    weight: number,
-}
-
-export type SingleChoiceVote = BaseVote & {
-    choices: [FixedChoice],
-}
-
-export type MultipleChoiceVote = BaseVote & {
-    choices: FixedChoice[],
-}
-
-export type WeightedCoicesVote = BaseVote & {
-    choices: WeightedChoice[],
-}
+import { VoteTypes, BaseVote, SingleChoiceVote, WeightedCoicesVote, MultipleChoiceVote, WeightedChoice } from './types';
 
 export function parseVote(message: string, type: VoteTypes.singleChoice): SingleChoiceVote;
 export function parseVote(message: string, type: VoteTypes.multipleChoice): MultipleChoiceVote;

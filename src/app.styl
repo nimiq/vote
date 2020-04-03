@@ -7,13 +7,31 @@
   margin-left auto
   margin-right auto
 
-.results .vote
-  // border .5px solid var(--nimiq-card-bg)
-  height 2em
-  overflow hidden
-  display inline-block
-  // border-radius 3px
-  min-width 2px
+.nq-link
+  cursor pointer
+
+// .results .vote
+//   // border .5px solid var(--nimiq-card-bg)
+//   height 2em
+//   overflow hidden
+//   display inline-block
+//   // border-radius 3px
+//   min-width 2px
+
+.results
+  display flex
+  flex-direction column
+
+  .votes
+    display flex
+    flex-direction row
+
+    .vote
+      display flex
+      flex-shrink 0
+      height 2em
+      overflow hidden
+      // min-width 2px
 
 .quote
   text-align center
