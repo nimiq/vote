@@ -1,6 +1,9 @@
 import { unique } from 'typescript-array-utils';
 import { VoteTypes, BaseVote, SingleChoiceVote, WeightedCoicesVote, MultipleChoiceVote, WeightedChoice } from './types';
 
+const ELEMENT_SEPARATOR = '/';
+const WEIGHT_SEPARATOR = ':';
+
 export function parseVote(message: string, type: VoteTypes.singleChoice): SingleChoiceVote;
 export function parseVote(message: string, type: VoteTypes.multipleChoice): MultipleChoiceVote;
 export function parseVote(message: string, type: VoteTypes.weightedChoices): WeightedCoicesVote;
@@ -16,7 +19,7 @@ export function parseVote(
         // Human readable version
         try {
             // Vote_<Election name as string>_<options>
-            const elements = message.split('_');
+            const elements = message.split(ELEMENT_SEPARATOR);
             elements.shift();
             const name = elements.shift()!;
             switch (type) {
@@ -30,7 +33,7 @@ export function parseVote(
                 }
                 case VoteTypes.weightedChoices: {
                     const choices: WeightedChoice[] = elements.map(((option) => {
-                        const [name2, weight] = option.split(':');
+                        const [name2, weight] = option.split(WEIGHT_SEPARATOR);
                         return { name: name2, weight: parseInt(weight, 10) };
                     }));
                     if (choices.length !== unique(choices, (a, b) => a.name === b.name).length) {
@@ -60,10 +63,10 @@ function serializeChoice(
             case VoteTypes.singleChoice: return (vote as SingleChoiceVote).choices[0].name;
             case VoteTypes.multipleChoice: return (vote as MultipleChoiceVote).choices
                 .map((choice) => choice.name)
-                .join('_');
+                .join(ELEMENT_SEPARATOR);
             case VoteTypes.weightedChoices: return (vote as WeightedCoicesVote).choices
-                .map((choice) => `${choice.name}:${Math.round(choice.weight)}`)
-                .join('_');
+                .map((choice) => `${choice.name}${WEIGHT_SEPARATOR}${Math.round(choice.weight)}`)
+                .join(ELEMENT_SEPARATOR);
             default: throw new Error(`Vote type "${type}" does not exist`);
         }
     }
