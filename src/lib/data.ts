@@ -3,7 +3,7 @@ import { fetchJson } from './network';
 import { ElectionResults, Config } from './types';
 import { dummyConfig, dummyResult } from './dummies';
 
-const votingLocation = 'https://nimiq.community/votings/';
+const votingLocation = 'https://nimiq.community/votings.';
 const configAddress = `${votingLocation}${testnet ? 'test' : 'live'}.json`;
 
 async function _load(url: string): Promise<Array<Config>> {
