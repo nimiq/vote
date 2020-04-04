@@ -70,7 +70,7 @@
         .nq-card-header(v-else)
             h1 Voting results
             | {{ resultsConfig.label || resultsConfig.name }}
-        .nq-card-body(v-if='!currentResults') loading...
+        .nq-card-body(v-if='!currentResults') Loading... ({{ consensus ? 'consensus established, scanning blockchain' : 'waiting for consensus'}})
         .nq-card-body(v-else-if='!currentResults.stats.votes')
             span(v-if='isPreliminary') No results yet. Be the first one to vote!
             span(v-else) No votes were recorded in this election.
@@ -82,7 +82,7 @@
                     .debug(v-if='debug') maxVoteCount {{ maxVoteCount }}, maxValue: {{ maxChoiceValue }}Luna, percentPerLuna {{ percentPerLuna }}%, minWidth {{ minBarItemWidth }}
                     .votes
                         .vote(v-for='vote of result.votes'
-                            :title='`${vote.sender} - ${Math.round(vote.value / 100000)}NIM - ${vote.value * percentPerLuna}%`'
+                            :title='`${vote.sender} - ${Math.round(vote.value / 100000)}NIM - ${(vote.value * percentPerLuna).toFixed(2)}%`'
                             :style='`background: ${color(vote.sender)}; flex-grow: ${minBarItemWidth + vote.value * percentPerLuna};`')
                         //- | ({{maxChoiceValue}} - {{result.value}}) * {{percentPerLuna}} = {{(maxChoiceValue - result.value) * percentPerLuna}}
                         .vote(:style='`flex-grow: ${(maxChoiceValue - result.value) * percentPerLuna}`')
@@ -90,7 +90,7 @@
                 In total, {{ currentResults.stats.votes }} votes were casted representing
                 {{ Math.round(currentResults.stats.nim / 100000) }} NIM.
             p(v-if='isPreliminary')
-                button.nq-button-pill(@click='showPreliminaryVotes()' :disabled='height <= lastCounted') refresh
+                button.nq-button-pill(@click='showPreliminaryVotes()' v-show='height > resultHeight') refresh
             p(v-else-if='votingConfig')
                 button.nq-button-pill(@click='showPreliminaryVotes()') show preliminary results of current voting
         .nq-card-footer

@@ -44,14 +44,15 @@ export default class App extends Vue {
     client?: Nimiq.Client;
     consensus = false;
     height = 0;
-    lastCounted = 0;
     testnet = testnet;
     debug = debug;
     dummies = dummies;
     private hub: HubApi = new HubApi(testnet ? 'https://hub.nimiq-testnet.com' : 'https://hub.nimiq.com');
     voted: Receipt | null = null;
+    resultHeight: number = 0;
     resultsConfig: Config | null = null; // current results showing
     currentResults: ElectionResults | null = null;
+    preliminaryResults: ElectionResults | null = null;
     error: Error | null = null;
     colors: any;
 
@@ -101,7 +102,7 @@ export default class App extends Vue {
 
         console.log('Loading voting app: Parsed config', new Date().getTime() - start, this.choices);
         this.loading = false;
-        this.makeColors();
+        await Vue.nextTick();
 
         try {
             const Nimiq = await loadNimiqCoreOnly();
@@ -112,7 +113,6 @@ export default class App extends Vue {
                 if (testnet) Nimiq.GenesisConfig.test(); else Nimiq.GenesisConfig.main();
             }
             this.client = Nimiq.Client.Configuration.builder().instantiateClient();
-            this.height = await this.client.getHeadHeight();
         } catch (e) {
             console.log(e);
             // if (e.message !== 'GenesisConfig already initialized') {
@@ -132,7 +132,11 @@ export default class App extends Vue {
             this.consensus = state === Nimiq.Client.ConsensusState.ESTABLISHED;
         });
         client.addHeadChangedListener(async () => {
+            // getHeadHeight return 1 the first time
+            // console.log('$$$$$$$$$$', this.height);
+            // this.height = Math.max(this.height, await client.getHeadHeight());
             this.height = await client.getHeadHeight();
+            // console.log('$$$$$$$$$$', this.height);
             if (this.votingConfig?.end === this.height) {
                 const results = await this.showPreliminaryVotes();
                 console.warn(`Voting results for ${this.votingConfig.name}:`);
@@ -142,6 +146,7 @@ export default class App extends Vue {
         });
 
         console.log('Loading voting app: Loaded Nimiq', new Date().getTime() - start, client);
+        await Vue.nextTick();
 
         await client.waitForConsensusEstablished();
         if (this.votingConfig && !this.currentResults) await this.showPreliminaryVotes();
@@ -154,7 +159,8 @@ export default class App extends Vue {
 
     @Watch('currentResults')
     makeColors() {
-        const colors = Math.min(this.currentResults?.stats.votes || 20, 100);
+        if (!this.currentResults) return; // no results, no colors;
+        const colors = Math.min(this.currentResults.stats.votes, 100);
         console.log(`Making ${colors} beautiful colors...`);
         this.colors = distinctColors({
             count: colors,
@@ -215,8 +221,9 @@ export default class App extends Vue {
         const addresses: string[] = [];
         const stats: any = {};
 
-        if (height === this.lastCounted) throw new Error(`Counted block height ${height} already.`);
-        this.lastCounted = height;
+        if (this.preliminaryResults && this.resultHeight >= height) return this.preliminaryResults;
+        this.resultHeight = height;
+        await Vue.nextTick();
 
         console.log('counting votes: find all votes', config);
         const start = new Date().getTime();
@@ -274,7 +281,7 @@ export default class App extends Vue {
         console.log('counting votes: return', new Date().getTime() - start, sum, votesPerChoice);
 
         // format result
-        return {
+        this.preliminaryResults = {
             label: config.label || config.name,
             results: config.choices.map((choice) => ({
                 label: choice.label || choice.name,
@@ -283,19 +290,27 @@ export default class App extends Vue {
             })).sort((a, b) => b.value - a.value), // highest first
             stats,
         };
+
+        return this.preliminaryResults;
     }
 
     async showPreliminaryVotes(): Promise<ElectionResults> {
         if (!this.votingConfig) throw new Error('No on-going voting.');
-        this.currentResults = await this.countVotes(this.votingConfig);
+        // this.loadingResults = true;
+        this.currentResults = null;
         this.resultsConfig = this.votingConfig;
+        this.currentResults = await this.countVotes(this.votingConfig);
+        // this.loadingResults = false;
         return this.currentResults;
     }
 
     async showPastVoting(config: Config) {
         if (!config?.results) throw new Error(`No results file provided for ${config?.name}`);
+        // this.loadingResults = true;
+        this.currentResults = null;
         this.resultsConfig = config;
         this.currentResults = await loadResults(config);
+        // this.loadingResults = false;
     }
 
     // voting
