@@ -1,5 +1,6 @@
 import { unique } from 'typescript-array-utils';
-import { VoteTypes, BaseVote, SingleChoiceVote, WeightedCoicesVote, MultipleChoiceVote, WeightedChoice } from './types';
+import { VoteTypes, BaseVote, SingleChoiceVote, WeightedCoicesVote, MultipleChoiceVote, RankingVote, WeightedChoice }
+    from './types';
 
 const ELEMENT_SEPARATOR = '/';
 const WEIGHT_SEPARATOR = ':';
@@ -7,6 +8,7 @@ const WEIGHT_SEPARATOR = ':';
 export function parseVote(message: string, type: VoteTypes.singleChoice): SingleChoiceVote;
 export function parseVote(message: string, type: VoteTypes.multipleChoice): MultipleChoiceVote;
 export function parseVote(message: string, type: VoteTypes.weightedChoices): WeightedCoicesVote;
+export function parseVote(message: string, type: VoteTypes.ranking): RankingVote;
 export function parseVote(message: string, type: string): BaseVote;
 export function parseVote(
     message: string,
@@ -33,8 +35,8 @@ export function parseVote(
                 }
                 case VoteTypes.weightedChoices: {
                     const choices: WeightedChoice[] = elements.map(((option) => {
-                        const [name2, weight] = option.split(WEIGHT_SEPARATOR);
-                        return { name: name2, weight: parseInt(weight, 10) };
+                        const [choiceName, weight] = option.split(WEIGHT_SEPARATOR);
+                        return { name: choiceName, weight: parseInt(weight, 10) };
                     }));
                     if (choices.length !== unique(choices, (a, b) => a.name === b.name).length) {
                         invalid('choices must be unique');
@@ -42,6 +44,11 @@ export function parseVote(
                     if (choices.filter((choice) => choice.weight < 0 || choice.weight > 99).length > 0) {
                         invalid('choice weights must be between 0 and 99 (inclusive).');
                     }
+                    return { name, choices };
+                }
+                case VoteTypes.ranking: {
+                    if (elements.length !== unique(elements).length) invalid('choices must be unique');
+                    const choices = elements.map((choice, pos) => ({ name: choice, weight: elements.length - pos }));
                     return { name, choices };
                 }
                 default: throw new Error(`Vote type "${type}" does not exist`);
@@ -54,7 +61,7 @@ export function parseVote(
 }
 
 function serializeChoice(
-    vote: SingleChoiceVote | MultipleChoiceVote | WeightedCoicesVote,
+    vote: SingleChoiceVote | MultipleChoiceVote | WeightedCoicesVote | RankingVote,
     type: VoteTypes,
     prefix = 'Vote',
 ): string {
@@ -67,17 +74,18 @@ function serializeChoice(
             case VoteTypes.weightedChoices: return (vote as WeightedCoicesVote).choices
                 .map((choice) => `${choice.name}${WEIGHT_SEPARATOR}${Math.round(choice.weight)}`)
                 .join(ELEMENT_SEPARATOR);
+            case VoteTypes.ranking: return (vote as RankingVote).choices
+                .sort((a, b) => b.weight - a.weight) // highest first
+                .map((choice) => choice.name)
+                .join(ELEMENT_SEPARATOR);
             default: throw new Error(`Vote type "${type}" does not exist`);
         }
     }
     throw new Error(`Format "${prefix}" not supported.`);
 }
 
-// export function serializeVote(vote: SingleChoiceVote, type: VoteTypes.singleChoice, prefix?: string): string
-// export function serializeVote(vote: MultipleChoiceVote, type: VoteTypes.multipleChoice, prefix?: string): string
-// export function serializeVote(vote: WeightedCoicesVote, type: VoteTypes.weightedChoices, prefix?: string): string
 export function serializeVote(
-    vote: SingleChoiceVote | MultipleChoiceVote | WeightedCoicesVote,
+    vote: SingleChoiceVote | MultipleChoiceVote | WeightedCoicesVote | RankingVote,
     type: VoteTypes,
     prefix = 'Vote',
 ): string {

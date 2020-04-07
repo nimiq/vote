@@ -3,6 +3,7 @@ import '@nimiq/vue-components/dist/NimiqVueComponents.css';
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import HubApi from '@nimiq/hub-api';
 import stringHash from 'string-hash';
+import draggable from 'vuedraggable';
 
 import { BaseVote, VoteTypes, BaseChoice, Config, Option, Receipt, ElectionResults, CastVote, ElectionVote }
     from './lib/types';
@@ -32,7 +33,7 @@ type Error = {
 
 const appLogo = `${window.location.origin}/android-icon-192x192.png`;
 
-@Component({ components: {} })
+@Component({ components: { draggable } })
 export default class App extends Vue {
     loading = true;
     choices: Option[] = [];
@@ -48,7 +49,8 @@ export default class App extends Vue {
     debug = debug;
     dummies = dummies;
     private hub: HubApi = new HubApi(testnet ? 'https://hub.nimiq-testnet.com' : 'https://hub.nimiq.com');
-    voted: Receipt | null = null;
+    voted: Receipt | null = localStorage.voted ? JSON.parse(localStorage.voted) : null;
+    newlyVoted = false;
     resultHeight: number = 0;
     resultsConfig: Config | null = null; // current results showing
     currentResults: ElectionResults | null = null;
@@ -93,7 +95,7 @@ export default class App extends Vue {
                     choices.push({
                         label: choice.label || choice.name,
                         name: choice.name,
-                        weight: config.type === VoteTypes.weightedChoices ? 50 : 0,
+                        weight: config.type === VoteTypes.weightedChoices ? 50 : 1,
                     });
                 }
             } else throw new Error('No choices for this voting found.');
@@ -187,6 +189,9 @@ export default class App extends Vue {
                     weight: (choice.weight / total) * 100,
                 }));
             }
+            case VoteTypes.ranking: {
+                return this.choices.map((choice, pos) => ({ name: choice.name, weight: this.choices.length - pos }));
+            }
             default: throw new Error(`Vote type "${type}" not implemented!`);
         }
     }
@@ -210,6 +215,8 @@ export default class App extends Vue {
             hash: signedTransaction.hash,
             vote,
         };
+        this.newlyVoted = true;
+        localStorage.voted = JSON.stringify(this.voted);
     }
 
     async countVotes(config = this.votingConfig!): Promise<ElectionResults> {

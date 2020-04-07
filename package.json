@@ -16,6 +16,7 @@
     "@nimiq/utils": "^0.4.6",
     "@nimiq/vue-components": "https://github.com/nimiq/vue-components.git#build/master",
     "@types/string-hash": "^1.1.1",
+    "@types/vuedraggable": "^2.23.0",
     "core-js": "^3.6.4",
     "distinct-colors": "^2.1.0",
     "pug": "^2.0.4",
@@ -26,7 +27,8 @@
     "typescript-array-utils": "^0.1.4",
     "vue": "^2.6.11",
     "vue-class-component": "^7.2.2",
-    "vue-property-decorator": "^8.3.0"
+    "vue-property-decorator": "^8.3.0",
+    "vuedraggable": "^2.23.2"
   },
   "devDependencies": {
     "@types/jest": "^24.0.19",

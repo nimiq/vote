@@ -3,6 +3,7 @@ export enum VoteTypes {
     singleChoice = 'singleChoice',
     multipleChoice = 'multipleChoice',
     weightedChoices = 'weightedChoices',
+    ranking = 'ranking',
 }
 
 export type BaseChoice = {
@@ -34,6 +35,10 @@ export type MultipleChoiceVote = BaseVote & {
 }
 
 export type WeightedCoicesVote = BaseVote & {
+    choices: WeightedChoice[],
+}
+
+export type RankingVote = BaseVote & {
     choices: WeightedChoice[],
 }
 

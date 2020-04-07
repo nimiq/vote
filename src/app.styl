@@ -51,6 +51,14 @@
 .choices
   padding 1em 0
 
-  .choice label
-    min-width 10em
-    display inline-block
+  .choice
+    label
+      min-width 10em
+      display inline-block
+    .ranking &
+      cursor: move
+      &:before
+        content "⇅ "
+        opacity  .333
+      &.sortable-ghost
+        opacity .333

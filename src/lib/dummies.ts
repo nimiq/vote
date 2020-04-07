@@ -52,18 +52,25 @@ export const dummyResult = {
     },
 };
 
+// ranking
 export const dummyConfig = [{
-    start: 1030884,
-    end: 1040884,
-    label: 'What\'s the best ice cream: Vanilla or Chocolate?',
+    start: 923198,
+    end: 924298,
+    label: 'What\'s the best ice cream?',
     name: 'best ice cream',
-    type: VoteTypes.singleChoice,
+    type: VoteTypes.ranking,
     choices: [{
         name: 'vanilla',
         label: 'Vanilla',
     }, {
         name: 'chocolate',
         label: 'Chocolate',
+    }, {
+        name: 'strawberry',
+        label: 'Strawberry',
+    }, {
+        name: 'none',
+        label: 'I don\'t like ice cream.',
     }],
 }, {
     start: 100,
@@ -80,3 +87,33 @@ export const dummyConfig = [{
     }],
     results: 'chocolate-vs-vanilla-2018',
 }];
+
+// single choice
+// export const dummyConfig = [{
+//     start: 1030884,
+//     end: 1040884,
+//     label: 'What\'s the best ice cream: Vanilla or Chocolate?',
+//     name: 'best ice cream',
+//     type: VoteTypes.singleChoice,
+//     choices: [{
+//         name: 'vanilla',
+//         label: 'Vanilla',
+//     }, {
+//         name: 'chocolate',
+//         label: 'Chocolate',
+//     }],
+// }, {
+//     start: 100,
+//     end: 1000,
+//     label: 'Test',
+//     name: 'test',
+//     type: VoteTypes.singleChoice,
+//     choices: [{
+//         name: 'vanilla',
+//         label: 'Vanilla',
+//     }, {
+//         name: 'chocolate',
+//         label: 'Chocolate',
+//     }],
+//     results: 'chocolate-vs-vanilla-2018',
+// }];

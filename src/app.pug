@@ -17,7 +17,9 @@
         div resultsConfig {{ resultsConfig }}
         div results {{ currentResults }}
 
-    .nq-card(v-if='votingConfig && !voted')
+    // voting /////////////////////////////////////////////////////////////////
+
+    .nq-card(v-if='votingConfig && !voted' :class='type')
         .nq-card-header
             h1 Voting
             | Make your voice heard and shape the future of Nimiq
@@ -39,6 +41,10 @@
                 .choice(v-for='choice of choices' :key='choice.name')
                     label(:for='choice.name') {{ choice.label }} ({{ Math.round(100 * choice.weight / totalWeight) }}%)
                     input.slider(:id='choice.name' type='range' min='0' max='99' v-model.number='choice.weight')
+            .choices(v-if='type === VoteTypes.ranking')
+                | Rank choices:
+                draggable(v-model="choices" group="choices" @start="drag=true" @end="drag=false")
+                    .choice(v-for='choice of choices' :key='choice.name') {{ choice.label }}
             button.nq-button(@click='submitVote' :disabled='!height || !canVote') {{ height ? 'vote' : 'waiting for chain height' }}
 
     .nq-card(v-else-if='votingConfig && voted')
@@ -47,6 +53,9 @@
             | You helped shaping the future of Nimiq!
         .nq-card-body
             p Your vote as recorded on the blockchain: #[br] {{ voted.vote }}
+            p
+                | Changed your mind? Just vote again, the last vote counts! #[br]
+                button.nq-button(@click='voted = null') Vote again
             p It will become visible with the next few blocks.
             p.
                 You can verify your vote on
@@ -62,6 +71,8 @@
     .nq-card(v-else-if='votingConfig.end <= height')
         .nq-card-header Voting ended
         .nq-card-body The results will now be calculated and then made available here.
+
+    // results ////////////////////////////////////////////////////////////////
 
     .nq-card(v-if='resultsConfig' ref='results')
         .nq-card-header(v-if='isPreliminary')
