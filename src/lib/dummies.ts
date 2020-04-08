@@ -53,7 +53,7 @@ export const dummyResult = {
 };
 
 // ranking
-export const dummyConfig = [{
+const rankingConfig = [{
     start: 923198,
     end: 924298,
     label: 'What\'s the best ice cream?',
@@ -89,31 +89,33 @@ export const dummyConfig = [{
 }];
 
 // single choice
-// export const dummyConfig = [{
-//     start: 1030884,
-//     end: 1040884,
-//     label: 'What\'s the best ice cream: Vanilla or Chocolate?',
-//     name: 'best ice cream',
-//     type: VoteTypes.singleChoice,
-//     choices: [{
-//         name: 'vanilla',
-//         label: 'Vanilla',
-//     }, {
-//         name: 'chocolate',
-//         label: 'Chocolate',
-//     }],
-// }, {
-//     start: 100,
-//     end: 1000,
-//     label: 'Test',
-//     name: 'test',
-//     type: VoteTypes.singleChoice,
-//     choices: [{
-//         name: 'vanilla',
-//         label: 'Vanilla',
-//     }, {
-//         name: 'chocolate',
-//         label: 'Chocolate',
-//     }],
-//     results: 'chocolate-vs-vanilla-2018',
-// }];
+const singleChoiceConfig = [{
+    start: 920884,
+    end: 1040884,
+    label: 'What\'s the best ice cream: Vanilla or Chocolate?',
+    name: 'best ice cream',
+    type: VoteTypes.singleChoice,
+    choices: [{
+        name: 'vanilla',
+        label: 'Vanilla',
+    }, {
+        name: 'chocolate',
+        label: 'Chocolate',
+    }],
+}, {
+    start: 100,
+    end: 1000,
+    label: 'Test',
+    name: 'test',
+    type: VoteTypes.singleChoice,
+    choices: [{
+        name: 'vanilla',
+        label: 'Vanilla',
+    }, {
+        name: 'chocolate',
+        label: 'Chocolate',
+    }],
+    results: 'chocolate-vs-vanilla-2018',
+}];
+
+export const dummyConfig = rankingConfig;
