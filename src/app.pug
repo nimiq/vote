@@ -6,14 +6,17 @@
 #app.loading(v-else-if='loading') loading...
 #app(v-else)
     .debugging(v-if='debug')
+        h2 Debugging
         div testnet {{ testnet }}, debug {{ debug }}, dummies {{ dummies }}
         div Loading {{ loading }}
-        div height {{ height }}
-        div consensus {{ consensus }}
+        div height {{ height }}, consensus {{ consensus }}
+        hr
+        div type {{ type }}, #configs {{ configs.length }}
+        div voted {{ voted }}, newlyVoted {{ newlyVoted }}
+        div votingAddress {{ votingAddress }}
         div votingConfig {{ votingConfig }}
-        div type {{ type }}
         div choices {{ choices }}
-        div voted {{ voted }}
+        hr
         div resultsConfig {{ resultsConfig }}
         div results {{ currentResults }}
 
@@ -82,8 +85,9 @@
             h1 Voting results
             | {{ resultsConfig.label || resultsConfig.name }}
         .nq-card-body(v-if='!currentResults') Loading... ({{ consensus ? 'consensus established, scanning blockchain' : 'waiting for consensus'}})
+        .nq-card-body(v-else-if='currentResults === false') Could not load results. Maybe the results are not available yet.
         .nq-card-body(v-else-if='!currentResults.stats.votes')
-            span(v-if='isPreliminary') No results yet. Be the first one to vote!
+            span(v-if='isPreliminary') No results yet. It might take up to a few minutes for the results to show.
             span(v-else) No votes were recorded in this election.
         .nq-card-body(v-else)
             //- p.title {{ currentResults.label }}
