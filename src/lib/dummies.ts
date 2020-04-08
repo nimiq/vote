@@ -53,9 +53,10 @@ export const dummyResult = {
 };
 
 // ranking
+// eslint-disable-next-line
 const rankingConfig = [{
     start: 923198,
-    end: 924298,
+    end: 934298,
     label: 'What\'s the best ice cream?',
     name: 'best ice cream',
     type: VoteTypes.ranking,
@@ -89,6 +90,7 @@ const rankingConfig = [{
 }];
 
 // single choice
+// eslint-disable-next-line
 const singleChoiceConfig = [{
     start: 920884,
     end: 1040884,
