@@ -2,6 +2,7 @@ import { dummies, configAddress, votingLocation } from './const';
 import { fetchJson } from './network';
 import { ElectionResults, Config } from './types';
 import { dummyConfig, dummyResult } from './dummies';
+import { voteAddress } from './votes';
 
 async function _load(url: string): Promise<Array<Config>> {
     try {
@@ -20,6 +21,6 @@ export async function loadConfig(): Promise<Array<Config>> {
 
 export async function loadResults(config: Config): Promise<ElectionResults> {
     return !dummies
-        ? fetchJson(`${votingLocation}${config!.results}.json`)
+        ? fetchJson(`${votingLocation}${voteAddress(config, false)}.json`)
         : dummyResult;
 }

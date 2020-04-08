@@ -1,6 +1,7 @@
 import { unique } from 'typescript-array-utils';
-import { VoteTypes, BaseVote, SingleChoiceVote, WeightedCoicesVote, MultipleChoiceVote, RankingVote, WeightedChoice }
-    from './types';
+import { toBase32, ibanCheck, CCODE } from './core';
+import { VoteTypes, BaseVote, SingleChoiceVote, WeightedCoicesVote, MultipleChoiceVote, RankingVote, WeightedChoice,
+    Config } from './types';
 
 const ELEMENT_SEPARATOR = '/';
 const WEIGHT_SEPARATOR = ':';
@@ -97,4 +98,22 @@ export function serializeVote(
 
 export function voteTotalWeight(choices: WeightedChoice[]) {
     return choices.map((choice) => choice.weight).reduce((previous, current) => previous + current);
+}
+
+const crypto = window.crypto.subtle || window.crypto;
+const encoder = new TextEncoder();
+async function configHash(config: Config): Promise<ArrayBuffer> {
+    const message = JSON.stringify(config);
+    const data = encoder.encode(message);
+    return crypto.digest('SHA-256', data);
+}
+
+export async function voteAddress(config: Config, spaces = true): Promise<string> {
+    const hash = await configHash(config);
+    const base32 = toBase32(new Uint8Array(hash));
+    const digits = `V0TE${base32.slice(0, 28)}`;
+    // eslint-disable-next-line prefer-template
+    const check = ('00' + (98 - ibanCheck(digits + CCODE + '00'))).slice(-2);
+    const address = CCODE + check + digits;
+    return spaces ? address.replace(/.{4}/g, '$& ').trim() : address;
 }

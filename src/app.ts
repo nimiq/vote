@@ -8,10 +8,10 @@ import draggable from 'vuedraggable';
 import { BaseVote, VoteTypes, BaseChoice, Config, Option, Receipt, ElectionResults, CastVote, ElectionVote }
     from './lib/types';
 import { loadNimiqCoreOnly, loadNimiqWithCryptography } from './lib/CoreLoader';
-import { serializeVote, parseVote, voteTotalWeight } from './lib/votes';
+import { serializeVote, parseVote, voteTotalWeight, voteAddress } from './lib/votes';
 import { loadConfig, loadResults } from './lib/data';
 import { findTxBetween, watchApi } from './lib/network';
-import { testnet, debug, voteAddress, dummies } from './lib/const';
+import { testnet, debug, dummies } from './lib/const';
 
 const distinctColors = require('distinct-colors').default;
 
@@ -36,26 +36,32 @@ const appLogo = `${window.location.origin}/android-icon-192x192.png`;
 @Component({ components: { draggable } })
 export default class App extends Vue {
     loading = true;
-    choices: Option[] = [];
-    configs: Array<Config> = [];
-    votingConfig: Config | null = null; // current voting
-    singleChoice: string = '';
-    multipleChoices: string[] = [];
-    pastVotings: Array<Config> = [];
-    client?: Nimiq.Client;
-    consensus = false;
-    height = 0;
     testnet = testnet;
     debug = debug;
     dummies = dummies;
+    error: Error | null = null;
+    configs: Array<Config> = [];
+
+    votingConfig: Config | null = null; // current voting
+    votingAddress: string | null = null; // address to vote to
     private hub: HubApi = new HubApi(testnet ? 'https://hub.nimiq-testnet.com' : 'https://hub.nimiq.com');
     voted: Receipt | null = localStorage.voted ? JSON.parse(localStorage.voted) : null;
     newlyVoted = false;
+
+    choices: Option[] = [];
+    singleChoice: string = '';
+    multipleChoices: string[] = [];
+
+    client?: Nimiq.Client;
+    consensus = false;
+    height = 0;
+
+    pastVotings: Array<Config> = [];
+
     resultHeight: number = 0;
     resultsConfig: Config | null = null; // current results showing
-    currentResults: ElectionResults | null = null;
+    currentResults: ElectionResults | false | null = null;
     preliminaryResults: ElectionResults | null = null;
-    error: Error | null = null;
     colors: any;
 
     async created() {
@@ -98,9 +104,10 @@ export default class App extends Vue {
                         weight: config.type === VoteTypes.weightedChoices ? 50 : 1,
                     });
                 }
+                this.votingAddress = await voteAddress(this.votingConfig, true);
             } else throw new Error('No choices for this voting found.');
         }
-        this.pastVotings = this.configs.filter((config) => config.end <= height && config.results);
+        this.pastVotings = this.configs.filter((config) => config.end <= height);
 
         console.log('Loading voting app: Parsed config', new Date().getTime() - start, this.choices);
         this.loading = false;
@@ -205,7 +212,7 @@ export default class App extends Vue {
         const signedTransaction = await hub.checkout({
             appName: 'Nimiq Voting App',
             shopLogoUrl: appLogo,
-            recipient: voteAddress,
+            recipient: this.votingAddress!,
             value: 1,
             extraData: vote,
             validityDuration: Math.min(120, config!.end - height),
@@ -223,7 +230,7 @@ export default class App extends Vue {
         const client = this.client!;
         const height = await client.getHeadHeight();
         const end = Math.min(config.end, height);
-        const address = voteAddress.replace(' ', '');
+        const address = this.votingAddress!.replace(' ', '');
         const votes: CastVote<BaseVote>[] = [];
         const addresses: string[] = [];
         const stats: any = {};
@@ -237,7 +244,7 @@ export default class App extends Vue {
 
         // find all votes
         (await findTxBetween(address, config.start, end, testnet)).forEach((tx) => {
-            if (addresses.includes(tx.sender)) return; // ignore older ones
+            if (addresses.includes(tx.sender)) return; // only last vote countes
             try {
                 // eslint-disable-next-line
                 const { data, sender, value, height } = tx;
@@ -312,12 +319,13 @@ export default class App extends Vue {
     }
 
     async showPastVoting(config: Config) {
-        if (!config?.results) throw new Error(`No results file provided for ${config?.name}`);
-        // this.loadingResults = true;
         this.currentResults = null;
         this.resultsConfig = config;
-        this.currentResults = await loadResults(config);
-        // this.loadingResults = false;
+        try {
+            this.currentResults = await loadResults(config);
+        } catch (e) {
+            this.currentResults = false;
+        }
     }
 
     // voting
@@ -357,7 +365,7 @@ export default class App extends Vue {
     }
 
     get maxVoteCount(): number {
-        return this.currentResults!.results
+        return (this.currentResults as ElectionResults).results
             .map((result) => result.votes.length)
             .reduce((a, b) => Math.max(a, b));
     }
@@ -365,21 +373,20 @@ export default class App extends Vue {
     get maxWidth(): number {
         console.log('maxWidth', this.$refs);
         // const maxVotes = this.currentResults!.results.map((result) => result.votes.length).sort((a, b) => b - a)[0];
-        const maxVotes = this.currentResults!.results
+        const maxVotes = (this.currentResults as ElectionResults).results
             .map((result) => result.votes.length)
             .reduce((a, b) => Math.max(a, b));
         return (this.$refs.results as HTMLElement)?.offsetWidth - 70 - maxVotes * 2;
     }
 
     get maxChoiceValue(): number {
-        // return this.currentResults!.results.map((result) => result.value).sort((a, b) => b - a)[0];
-        return this.currentResults!.results
+        return (this.currentResults as ElectionResults).results
             .map((result) => result.value)
             .reduce((a, b) => Math.max(a, b));
     }
 
     get isPreliminary(): boolean {
-        return !this.resultsConfig?.results;
+        return this.resultsConfig!.end > this.height;
     }
 
     color(address: string): string {

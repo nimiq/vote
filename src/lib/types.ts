@@ -1,3 +1,5 @@
+export type Nimiq = typeof import('@nimiq/core-web');
+
 // Votes
 export enum VoteTypes {
     singleChoice = 'singleChoice',
@@ -55,7 +57,7 @@ export type Config = {
     name: string, // short, will be on the blockchain
     label?: string, // defaulting to name
     choices: Choice[],
-    results?: string,
+    // results?: string,
 }
 
 // App
