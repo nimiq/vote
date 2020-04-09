@@ -1,3 +1,5 @@
+nimiq-blue = #1F2348
+
 #introduction
   max-width 75rem
   margin-bottom 6rem
@@ -10,55 +12,133 @@
 .nq-link
   cursor pointer
 
-// .results .vote
-//   // border .5px solid var(--nimiq-card-bg)
-//   height 2em
-//   overflow hidden
-//   display inline-block
-//   // border-radius 3px
-//   min-width 2px
+p
+  font-size 2rem
+  line-height 1.3
 
-.results
+.i > *
+  display none
+
+.nq-card
+  width 52.5rem
+  min-height 70.5rem
   display flex
   flex-direction column
 
-  .votes
+  .nq-card-header
+    flex 0 0
+    h1
+      font-size 3rem
+      line-height 1.3
+      font-weight bold
+      margin 0 0 1.5rem 0
+    .sub
+      margin 0
+      font-weight 600
+
+  .nq-card-body
+    flex 1 0
     display flex
-    flex-direction row
+    flex-direction column
 
-    .vote
+  .nq-card-footer
+    flex 0 0
+    padding-left 4rem
+    padding-right 4rem
+    text-align center
+
+    .nq-button
+      margin-top 4rem
+      margin-bottom 1rem
+      min-width 33.75rem
+
+.disclaimer
+  opacity .5
+  font-size: 1.75rem
+  line-height 2.125rem
+  font-weight 600
+
+.voting
+  p.sub
+    color var(--nimiq-light-blue)
+
+  .choices
+    padding 1em 0
+    display flex
+    flex 1 0
+
+    .choice
+      input
+        display none
+      label
+        font-weight bold
+        display flex
+        justify-content center
+        align-items center
+        font-size 2.5rem
+        line-height 1
+
+  &.singleChoice, &.multipleChoice
+    .choices
+      flex-direction row
+      justify-content space-between
+      height 100%
+
+      .choice
+        flex 0
+        display flex
+        flex-direction row
+        justify-content space-between
+        align-items center
+        label
+          flex 1 0 calc(100% - 1rem)
+          color rgba(nimiq-blue, .5)
+          border .25rem solid rgba(nimiq-blue, .16)
+          text-align center
+          height calc(100% - 2rem)
+
+        input:checked + label
+          background nimiq-blue
+          color white
+
+      &.wrap
+        flex-wrap wrap
+
+      &.two .choice
+        flex-basis calc(50% - 1rem)
+        // align-items stretch
+        min-height 12.5rem
+
+      &.three .choice
+        flex-basis  calc(33.333% - 1rem)
+        height 12.5rem
+
+    // .choice
+    //   label
+    //     min-width 10em
+    //     display inline-block
+    //   .ranking &
+    //     cursor: move
+    //     &:before
+    //       content "⇅ "
+    //       opacity  .333
+    //     &.sortable-ghost
+    //       opacity .333
+  .disclaimer
+    line-height 2.625rem
+
+.results
+  .graph
+    display flex
+    flex-direction column
+
+    .votes
       display flex
-      flex-shrink 0
-      height 2em
-      overflow hidden
-      // min-width 2px
+      flex-direction row
 
-.quote
-  text-align center
-  font-weight bold
-  font-size 120%
-  &:before
-    content '“'
-  &:after
-    content '”'
+      .vote
+        display flex
+        flex-shrink 0
+        height 2em
+        overflow hidden
 
-.time
-  text-align center
-
-.note
-  font-size 80%
-
-.choices
-  padding 1em 0
-
-  .choice
-    label
-      min-width 10em
-      display inline-block
-    .ranking &
-      cursor: move
-      &:before
-        content "⇅ "
-        opacity  .333
-      &.sortable-ghost
-        opacity .333

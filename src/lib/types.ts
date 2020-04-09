@@ -55,7 +55,7 @@ export type Config = {
     end: number, // end block
     type: VoteTypes,
     name: string, // short, will be on the blockchain
-    label?: string, // defaulting to name
+    label: string, // short description of the purpose of the voting
     choices: Choice[],
     // results?: string,
 }

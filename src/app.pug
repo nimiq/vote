@@ -22,33 +22,44 @@
 
     // voting /////////////////////////////////////////////////////////////////
 
-    .nq-card(v-if='votingConfig && !voted' :class='type')
+    .nq-card.voting(v-if='votingConfig && !voted' :class='type')
         .nq-card-header
-            h1 Voting
-            | Make your voice heard and shape the future of Nimiq
+            h1 {{ votingConfig.label }}
+            p.sub(v-if='type === VoteTypes.singleChoice') Please choose your preference.
+            p.sub(v-else-if='type === VoteTypes.multipleChoice') Select one or more options.
+            p.sub(v-else-if='type === VoteTypes.weightedChoice') Please weigh the items by preference.
+            p.sub(v-else-if='type === VoteTypes.ranking') Please rank the items by preference.
+
+            .i
+                .bubble
+                    | This poll is open until block {{ votingConfig.end }}
+                    .small {{ timeRemaining }}
+
         .nq-card-body
-            .quote {{ votingConfig.label || votingConfig.name }}
-            .time.note Time remaining: {{ timeRemaining }}.
-            .choices.nq-text(v-if='type === VoteTypes.singleChoice')
-                | Choose one:
+            .choices.nq-text(v-if='type === VoteTypes.singleChoice' :class='choicesStyle')
                 .choice(v-for='choice of choices' :key='choice.name')
                     input.radio(:id='choice.name' name='sc' type='radio' :value='choice.name' v-model='singleChoice')
                     label(:for='choice.name') {{ choice.label }}
-            .choices(v-if='type === VoteTypes.multipleChoice')
-                | Multiple choices:
+
+            .choices(v-else-if='type === VoteTypes.multipleChoice' :class='choicesStyle')
                 .choice(v-for='choice of choices' :key='choice.name')
                     input.check(:id='choice.name' type='checkbox' :value='choice.name' v-model='multipleChoices')
                     label(:for='choice.name') {{ choice.label }}
-            .choices(v-if='type === VoteTypes.weightedChoices')
-                | Weigh your choices:
+
+            .choices(v-else-if='type === VoteTypes.weightedChoices')
                 .choice(v-for='choice of choices' :key='choice.name')
                     label(:for='choice.name') {{ choice.label }} ({{ Math.round(100 * choice.weight / totalWeight) }}%)
                     input.slider(:id='choice.name' type='range' min='0' max='99' v-model.number='choice.weight')
-            .choices(v-if='type === VoteTypes.ranking')
-                | Rank choices:
+
+            .choices(v-else-if='type === VoteTypes.ranking')
+                .number(v-for='(choice, index) of choices' :key='choice.name') {{ index + 1 }}
                 draggable(v-model="choices" group="choices" @start="drag=true" @end="drag=false")
                     .choice(v-for='choice of choices' :key='choice.name') {{ choice.label }}
-            button.nq-button(@click='submitVote' :disabled='!height || !canVote') {{ height ? 'vote' : 'waiting for chain height' }}
+
+        .nq-card-footer
+            p Make your choice and vote by sending a fraction of a NIM. This is a weighted vote: Every NIM in your wallet equals one vote.
+            button.nq-button.light-blue(@click='submitVote' :disabled='!height || !canVote') {{ height ? 'vote' : 'waiting for chain height' }}
+            .disclaimer Votes are stored on the blockchain.
 
     .nq-card(v-else-if='votingConfig && voted')
         .nq-card-header
@@ -77,7 +88,7 @@
 
     // results ////////////////////////////////////////////////////////////////
 
-    .nq-card(v-if='resultsConfig' ref='results')
+    .nq-card.results(v-if='resultsConfig' ref='results')
         .nq-card-header(v-if='isPreliminary')
             h1 Preliminary results
             | Estimated results of currently ongoing voting
@@ -90,8 +101,7 @@
             span(v-if='isPreliminary') No results yet. It might take up to a few minutes for the results to show.
             span(v-else) No votes were recorded in this election.
         .nq-card-body(v-else)
-            //- p.title {{ currentResults.label }}
-            section.results
+            section.graph
                 .result(v-for='result of currentResults.results')
                     | {{ result.label}}: {{ Math.round(result.value / currentResults.stats.nim * 100) }}%.
                     .debug(v-if='debug') maxVoteCount {{ maxVoteCount }}, maxValue: {{ maxChoiceValue }}Luna, percentPerLuna {{ percentPerLuna }}%, minWidth {{ minBarItemWidth }}

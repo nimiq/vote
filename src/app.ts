@@ -354,6 +354,11 @@ export default class App extends Vue {
         return `${blocks} block, approx. ${days} days, ${hours} hours and ${minutes} minutes`;
     }
 
+    get choicesStyle(): string {
+        const choices = this.votingConfig!.choices.length;
+        return `count-${choices} ${[2, 4].includes(choices) ? 'two' : 'three'} ${choices > 3 ? 'wrap' : ''} `;
+    }
+
     // current results
     get pixelPerNIM(): number {
         return this.maxWidth / this.maxChoiceValue;

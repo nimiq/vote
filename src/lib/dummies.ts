@@ -94,15 +94,15 @@ const rankingConfig = [{
 const singleChoiceConfig = [{
     start: 920884,
     end: 1040884,
-    label: 'What\'s the best ice cream: Vanilla or Chocolate?',
-    name: 'best ice cream',
+    label: 'Should Nimiq adjust its supply curve?',
+    name: 'change-curve',
     type: VoteTypes.singleChoice,
     choices: [{
-        name: 'vanilla',
-        label: 'Vanilla',
+        name: 'Yes',
+        label: 'Yes',
     }, {
-        name: 'chocolate',
-        label: 'Chocolate',
+        name: 'no',
+        label: 'No',
     }],
 }, {
     start: 100,
@@ -120,4 +120,4 @@ const singleChoiceConfig = [{
     results: 'chocolate-vs-vanilla-2018',
 }];
 
-export const dummyConfig = rankingConfig;
+export const dummyConfig = singleChoiceConfig;
