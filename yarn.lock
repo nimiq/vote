@@ -1027,6 +1027,11 @@
   resolved "https://registry.yarnpkg.com/@nimiq/style/-/style-0.7.6.tgz#b8a128d8fb6208554883158b8c2fa7f11d9e8333"
   integrity sha512-qFeIbv/xOCxHjYGfuB5U8Pb1xnRhrvetrdjtLK6zGU7tLWCuyQCOErvAKayVUpvpKyTWsXaG+I2YP2djcNo4kQ==
 
+"@nimiq/style@^0.8.0":
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/@nimiq/style/-/style-0.8.0.tgz#b97ec06ca7742c5fc8fa5a9951008ceb9e81d469"
+  integrity sha512-Pu4GSeMfOOsA8wW7JE1vABEcK7porFE0+vcUhhhnk7Y58YC5QG9d9Sk2zUjp2IwSbPp05t4ocLqJAm1WX0jhAg==
+
 "@nimiq/utils@^0.4.6":
   version "0.4.6"
   resolved "https://registry.yarnpkg.com/@nimiq/utils/-/utils-0.4.6.tgz#dfd166816fbe5041e9d6651937a9e4acb96d68e5"
@@ -1036,9 +1041,9 @@
 
 "@nimiq/vue-components@https://github.com/nimiq/vue-components.git#build/master":
   version "0.1.0"
-  resolved "https://github.com/nimiq/vue-components.git#b50040fa1802919e6f7e07e2ded03527f8cf06a3"
+  resolved "https://github.com/nimiq/vue-components.git#4aafb0a1b803dc7870e982457636f25446a1b3e2"
   dependencies:
-    "@nimiq/style" "^0.7.6"
+    "@nimiq/style" "^0.8.0"
     big-integer "^1.6.44"
     input-format "^0.2.8"
     qr-code "github:nimiq/qr-encoder"
@@ -10702,7 +10707,12 @@ void-elements@^2.0.1:
   resolved "https://registry.yarnpkg.com/void-elements/-/void-elements-2.0.1.tgz#c066afb582bb1cb4128d60ea92392e94d5e9dbec"
   integrity sha1-wGavtYK7HLQSjWDqkjkulNXp2+w=
 
-vue-class-component@^7.1.0, vue-class-component@^7.2.2:
+vue-class-component@^7.1.0:
+  version "7.2.3"
+  resolved "https://registry.yarnpkg.com/vue-class-component/-/vue-class-component-7.2.3.tgz#a5b1abd53513a72ad51098752e2dedd499807cca"
+  integrity sha512-oEqYpXKaFN+TaXU+mRLEx8dX0ah85aAJEe61mpdoUrq0Bhe/6sWhyZX1JjMQLhVsHAkncyhedhmCdDVSasUtDw==
+
+vue-class-component@^7.2.2:
   version "7.2.2"
   resolved "https://registry.yarnpkg.com/vue-class-component/-/vue-class-component-7.2.2.tgz#aecc6d28801f64c61eb04407cf3a5476da26b0c0"
   integrity sha512-QjVfjRffux0rUBNtxr1hvUxDrfifDvk9q/OSdB/sKIlfxAudDF2E1YTeiEC+qOYIOOBGWkgSKQSnast6H+S38w==
