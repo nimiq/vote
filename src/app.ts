@@ -367,7 +367,11 @@ export default class App extends Vue {
         const hours = Math.floor((blocks - days * 24 * 60) / 60);
         const minutes = blocks - (days * 24 + hours) * 60;
         // return `${hours}:${minutes < 10 ? `0${minutes}` : minutes}`;
-        return `${blocks} block, approx. ${days} days, ${hours} hours and ${minutes} minutes`;
+        return days === 0 && hours === 0
+            ? `${minutes} minutes`
+            : days === 0
+                ? `${hours} hours, ${minutes} min`
+                : `${days} days, ${hours} hours`;
     }
 
     get voted(): boolean {

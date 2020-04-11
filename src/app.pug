@@ -34,7 +34,7 @@
             Tooltip(:autoWidth='true' preferredPosition='bottom right' :container='$refs.app')
                 InfoCircleSmallIcon(slot='trigger')
                 | This poll is open until block {{ '#'+votingConfig.end }}
-                .small {{ timeRemaining }}
+                .small ~ {{ timeRemaining }}
 
         .nq-card-body
             .choices.nq-text(v-if='type === VoteTypes.singleChoice' :class='choicesStyle')
