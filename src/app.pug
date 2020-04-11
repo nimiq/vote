@@ -1,8 +1,8 @@
 #app.error(v-if='error')
-    h1 Oh oh, An error occured!
-    p.message What happend: {{ error.message }}
-    p.solution What you can do: {{ error.solution }}
-    p.reason Error message: {{ error.reason }}
+    h1 Oh oh, an error occured!
+    p.message {{ error.message }}
+    p.solution {{ error.solution }}
+    p.reason {{ error.reason }}
 #app.loading(v-else-if='loading') loading...
 #app(v-else ref='app')
     .debugging(v-if='debug')
@@ -31,10 +31,10 @@
             p.sub(v-else-if='type === VoteTypes.weightedChoice') Please weigh the items by preference.
             p.sub(v-else-if='type === VoteTypes.ranking') Please rank the items by preference.
 
-            Tooltip(:autoWidth='true' preferredPosition='bottom right')
+            Tooltip(:autoWidth='true' preferredPosition='bottom left')
                 InfoCircleSmallIcon(slot='trigger')
                 | This poll is open until block {{ '#'+votingConfig.end }}
-                .small ~ {{ timeRemaining }}
+                .note.small ~ {{ timeRemaining }}
 
         .nq-card-body
             .choices.nq-text(v-if='type === VoteTypes.singleChoice' :class='choicesStyle')
