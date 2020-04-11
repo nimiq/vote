@@ -98,7 +98,7 @@ const singleChoiceConfig = [{
     name: 'change-curve',
     type: VoteTypes.singleChoice,
     choices: [{
-        name: 'Yes',
+        name: 'yes',
         label: 'Yes',
     }, {
         name: 'no',

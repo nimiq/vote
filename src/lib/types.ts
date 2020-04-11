@@ -65,16 +65,19 @@ export type Option = BaseChoice & {
     label: string,
 }
 
-export type Receipt = {
-    hash: string,
-    vote: string,
-}
+// export type Receipt = {
+//     txHash: string,
+//     vote: BaseVote,
+//     serialized: string,
+// }
 
-export type CastVote<T extends BaseVote> = {
+export type CastVote<T extends BaseVote = BaseVote> = {
     vote: T,
+    serialized: string,
     tx: {
         sender: string,
-        value: number,
+        hash: string,
+        value: number, // 1 Luna
         height: number,
     },
     value: number,

@@ -5,9 +5,10 @@ nimiq-blue = #1F2348
   margin-bottom 6rem
   text-align center
 
-#app > *
-  margin-left auto
-  margin-right auto
+#app
+  display flex
+  flex-direction row
+  justify-content center
 
 .nq-link
   cursor pointer
@@ -20,13 +21,17 @@ p
   display none
 
 .nq-card
-  width 52.5rem
+  // width 52.5rem
   min-height 70.5rem
+  flex 0 0 52.5rem
+  max-width 52.5rem
   display flex
   flex-direction column
+  align-self center
 
   .nq-card-header
     flex 0 0
+    position relative
     h1
       font-size 3rem
       line-height 1.3
@@ -34,12 +39,22 @@ p
       margin 0 0 1.5rem 0
     .sub
       margin 0
-      font-weight 600
+    .tooltip
+      position absolute
+      top 2rem
+      right 2rem
+
+      svg
+        color rgba(nimiq-blue, .25)
+        width 2rem
+        height 2rem
+
 
   .nq-card-body
     flex 1 0
     display flex
     flex-direction column
+    text-align center
 
   .nq-card-footer
     flex 0 0
@@ -52,7 +67,7 @@ p
       margin-bottom 1rem
       min-width 33.75rem
 
-.disclaimer
+.note
   opacity .5
   font-size: 1.75rem
   line-height 2.125rem
@@ -61,6 +76,7 @@ p
 .voting
   p.sub
     color var(--nimiq-light-blue)
+    font-weight 600
 
   .choices
     padding 1em 0
@@ -106,7 +122,6 @@ p
 
       &.two .choice
         flex-basis calc(50% - 1rem)
-        // align-items stretch
         min-height 12.5rem
 
       &.three .choice
@@ -124,21 +139,48 @@ p
     //       opacity  .333
     //     &.sortable-ghost
     //       opacity .333
-  .disclaimer
+  .note
     line-height 2.625rem
 
 .results
   .graph
+    flex 1
     display flex
-    flex-direction column
+    flex-direction row
+    justify-content center
+    overflow auto
 
-    .votes
+    .result
       display flex
-      flex-direction row
+      flex-direction column
+      margin-right 3rem
 
-      .vote
+      .votes
+        flex 1
         display flex
-        flex-shrink 0
-        height 2em
-        overflow hidden
+        flex-direction column
+
+        .vote
+          display flex
+          flex-shrink 0
+          width 8rem
+          min-height .375rem
+          margin-bottom .375rem
+          overflow hidden
+          border-radius .5rem
+          &:not(.space)
+            box-shadow inset -2.25rem -2.25rem 3rem -2rem rgba(0,0,0,.1)
+
+          &.mini + &.mini
+            margin-bottom 0
+
+
+      .label
+        font-size 2.5rem
+        font-weight bold
+        margin-top 2.5rem
+
+
+  .vote-again
+    margin 1.75rem 0 2rem 0
 

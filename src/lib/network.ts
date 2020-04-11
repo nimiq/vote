@@ -1,4 +1,5 @@
 export type Tx = {
+    hash: string,
     sender: string,
     recipient: string,
     value: number,
@@ -38,6 +39,7 @@ export async function findTxBetween(
         // if (txs.length && txs[txs.length - 1]?.block_height > maxHeight) continue; // looking for older TX
         // console.log(skip, txs.map((tx) => ({ tx, data: atob(tx.data) })));
         txs.filter((tx) => tx.block_height >= minHeight && tx.block_height <= maxHeight).forEach((tx) => voteTxs.push({
+            hash: tx.hash,
             sender: tx.sender_address,
             recipient: tx.receiver_address,
             value: tx.value,

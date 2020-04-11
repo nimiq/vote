@@ -4,8 +4,9 @@ import { Component, Vue, Watch } from 'vue-property-decorator';
 import HubApi from '@nimiq/hub-api';
 import stringHash from 'string-hash';
 import draggable from 'vuedraggable';
+import { Tooltip, InfoCircleSmallIcon } from '@nimiq/vue-components';
 
-import { BaseVote, VoteTypes, BaseChoice, Config, Option, Receipt, ElectionResults, CastVote, ElectionVote }
+import { BaseVote, VoteTypes, BaseChoice, Config, Option, ElectionResults, CastVote, ElectionVote }
     from './lib/types';
 import { loadNimiqCoreOnly, loadNimiqWithCryptography } from './lib/CoreLoader';
 import { serializeVote, parseVote, voteTotalWeight, voteAddress } from './lib/votes';
@@ -33,7 +34,7 @@ type Error = {
 
 const appLogo = `${window.location.origin}/android-icon-192x192.png`;
 
-@Component({ components: { draggable } })
+@Component({ components: { draggable, Tooltip, InfoCircleSmallIcon } })
 export default class App extends Vue {
     loading = true;
     testnet = testnet;
@@ -45,7 +46,8 @@ export default class App extends Vue {
     votingConfig: Config | null = null; // current voting
     votingAddress: string | null = null; // address to vote to
     private hub: HubApi = new HubApi(testnet ? 'https://hub.nimiq-testnet.com' : 'https://hub.nimiq.com');
-    voted: Receipt | null = localStorage.voted ? JSON.parse(localStorage.voted) : null;
+    // vote: Receipt | null = localStorage.vote ? JSON.parse(localStorage.vote) : null;
+    vote: CastVote | null = localStorage.vote ? JSON.parse(localStorage.vote) : null;
     newlyVoted = false;
 
     choices: Option[] = [];
@@ -168,13 +170,13 @@ export default class App extends Vue {
 
     @Watch('currentResults')
     makeColors() {
-        if (!this.currentResults) return; // no results, no colors;
+        if (!this.currentResults) return; // no results, no colors.
         const colors = Math.min(this.currentResults.stats.votes, 100);
         console.log(`Making ${colors} beautiful colors...`);
         this.colors = distinctColors({
             count: colors,
-            lightMin: 70,
-            lightMax: 100,
+            lightMin: 65,
+            lightMax: 80,
             chromaMin: 40,
             chromaMax: 50,
         }).map((color: any) => color.hex());
@@ -205,25 +207,34 @@ export default class App extends Vue {
 
     async submitVote() {
         const { votingConfig: config, hub, height } = this;
-        const vote = serializeVote({ name: config!.name, choices: this.serializeChoices() }, config!.type);
-        console.log('Submitted vote:', vote);
-        console.log('parsed', parseVote(vote, config!.type));
+        const vote: BaseVote = { name: config!.name, choices: this.serializeChoices() };
+        const serialized = serializeVote(vote, config!.type);
+        console.log('Submitted vote:', serialized);
+        console.log('parsed', parseVote(serialized, config!.type));
 
         const signedTransaction = await hub.checkout({
             appName: 'Nimiq Voting App',
             shopLogoUrl: appLogo,
             recipient: this.votingAddress!,
             value: 1,
-            extraData: vote,
+            extraData: serialized,
             validityDuration: Math.min(120, config!.end - height),
         });
 
-        this.voted = {
-            hash: signedTransaction.hash,
+        const { sender, value } = signedTransaction.raw;
+        this.vote = {
             vote,
+            serialized,
+            tx: { hash: signedTransaction.hash, sender, height, value },
+            value: 0,
         };
         this.newlyVoted = true;
-        localStorage.voted = JSON.stringify(this.voted);
+
+        await this.$nextTick();
+        try {
+            this.vote.value = (await this.client?.getAccount(sender))!.balance;
+        } catch { /* not a problem if we miss the account balance */ }
+        localStorage.vote = JSON.stringify(this.vote);
     }
 
     async countVotes(config = this.votingConfig!): Promise<ElectionResults> {
@@ -247,10 +258,15 @@ export default class App extends Vue {
             if (addresses.includes(tx.sender)) return; // only last vote countes
             try {
                 // eslint-disable-next-line
-                const { data, sender, value, height } = tx;
+                const { hash, sender, value, data, height } = tx;
                 const vote = parseVote(data, config.type);
                 if (vote.name === config.name) {
-                    votes.push({ vote, tx: { sender, value, height }, value: 0 });
+                    votes.push({
+                        vote,
+                        serialized: data,
+                        tx: { hash, sender, value, height },
+                        value: 0, // value of account, to be calculated
+                    });
                     addresses.push(tx.sender);
                 }
                 console.log('tx', tx, vote);
@@ -354,19 +370,28 @@ export default class App extends Vue {
         return `${blocks} block, approx. ${days} days, ${hours} hours and ${minutes} minutes`;
     }
 
+    get voted(): boolean {
+        return this.votingConfig?.name === this.vote?.vote.name;
+    }
+
     get choicesStyle(): string {
         const choices = this.votingConfig!.choices.length;
         return `count-${choices} ${[2, 4].includes(choices) ? 'two' : 'three'} ${choices > 3 ? 'wrap' : ''} `;
     }
 
     // current results
-    get pixelPerNIM(): number {
-        return this.maxWidth / this.maxChoiceValue;
+    // get pixelPerNIM(): number {
+    //     return this.maxWidth / this.maxChoiceValue;
+    // }
+
+    readonly minBarItemSize = .375;
+    get percentPerLuna(): number {
+        return 100 / (this.currentResults as ElectionResults).stats.nim;
     }
 
-    readonly minBarItemWidth = .5;
-    get percentPerLuna(): number {
-        return (100 - this.maxVoteCount * this.minBarItemWidth) / this.maxChoiceValue;
+    get barSizePerLuna(): number {
+        // return (100 - this.maxVoteCount * this.minBarItemSize) / this.maxChoiceValue;
+        return 100 / this.maxChoiceValue;
     }
 
     get maxVoteCount(): number {
@@ -375,14 +400,13 @@ export default class App extends Vue {
             .reduce((a, b) => Math.max(a, b));
     }
 
-    get maxWidth(): number {
-        console.log('maxWidth', this.$refs);
-        // const maxVotes = this.currentResults!.results.map((result) => result.votes.length).sort((a, b) => b - a)[0];
-        const maxVotes = (this.currentResults as ElectionResults).results
-            .map((result) => result.votes.length)
-            .reduce((a, b) => Math.max(a, b));
-        return (this.$refs.results as HTMLElement)?.offsetWidth - 70 - maxVotes * 2;
-    }
+    // get maxWidth(): number {
+    //     console.log('maxWidth', this.$refs);
+    //     const maxVotes = (this.currentResults as ElectionResults).results
+    //         .map((result) => result.votes.length)
+    //         .reduce((a, b) => Math.max(a, b));
+    //     return (this.$refs.results as HTMLElement)?.offsetWidth - 70 - maxVotes * 2;
+    // }
 
     get maxChoiceValue(): number {
         return (this.currentResults as ElectionResults).results

@@ -4,7 +4,7 @@
     p.solution What you can do: {{ error.solution }}
     p.reason Error message: {{ error.reason }}
 #app.loading(v-else-if='loading') loading...
-#app(v-else)
+#app(v-else ref='app')
     .debugging(v-if='debug')
         h2 Debugging
         div testnet {{ testnet }}, debug {{ debug }}, dummies {{ dummies }}
@@ -13,6 +13,7 @@
         hr
         div type {{ type }}, #configs {{ configs.length }}
         div voted {{ voted }}, newlyVoted {{ newlyVoted }}
+        div vote {{ vote }}
         div votingAddress {{ votingAddress }}
         div votingConfig {{ votingConfig }}
         div choices {{ choices }}
@@ -30,10 +31,10 @@
             p.sub(v-else-if='type === VoteTypes.weightedChoice') Please weigh the items by preference.
             p.sub(v-else-if='type === VoteTypes.ranking') Please rank the items by preference.
 
-            .i
-                .bubble
-                    | This poll is open until block {{ votingConfig.end }}
-                    .small {{ timeRemaining }}
+            Tooltip(:autoWidth='true' preferredPosition='bottom right' :container='$refs.app')
+                InfoCircleSmallIcon(slot='trigger')
+                | This poll is open until block {{ '#'+votingConfig.end }}
+                .small {{ timeRemaining }}
 
         .nq-card-body
             .choices.nq-text(v-if='type === VoteTypes.singleChoice' :class='choicesStyle')
@@ -59,70 +60,59 @@
         .nq-card-footer
             p Make your choice and vote by sending a fraction of a NIM. This is a weighted vote: Every NIM in your wallet equals one vote.
             button.nq-button.light-blue(@click='submitVote' :disabled='!height || !canVote') {{ height ? 'vote' : 'waiting for chain height' }}
-            .disclaimer Votes are stored on the blockchain.
-
-    .nq-card(v-else-if='votingConfig && voted')
-        .nq-card-header
-            h1 Thank you for voting!
-            | You helped shaping the future of Nimiq!
-        .nq-card-body
-            p Your vote as recorded on the blockchain: #[br] {{ voted.vote }}
-            p
-                | Changed your mind? Just vote again, the last vote counts! #[br]
-                button.nq-button(@click='voted = null') Vote again
-            p It will become visible with the next few blocks.
-            p.
-                You can verify your vote on
-                #[a(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${voted.hash}`') nimiq.watch].
-            p.note.
-                Note: if you got the message "That transaction of block can not be found.",
-                that means you have to wait for the next block for your vote to be mined by the network.
-
-    .nq-card(v-else-if='!votingConfig')
-        .nq-card-header Currently no voting
-        .nq-card-body Find out more about Nimiq at #[a(href='https://nimiq.com') nimiq.com].
-
-    .nq-card(v-else-if='votingConfig.end <= height')
-        .nq-card-header Voting ended
-        .nq-card-body The results will now be calculated and then made available here.
+            .note Votes are stored on the blockchain.
 
     // results ////////////////////////////////////////////////////////////////
 
-    .nq-card.results(v-if='resultsConfig' ref='results')
-        .nq-card-header(v-if='isPreliminary')
-            h1 Preliminary results
-            | Estimated results of currently ongoing voting
+    .nq-card.results(v-else ref='results')
+        .nq-card-header(v-if='voted')
+            h1 Thank you for voting!
+            p.sub.
+                Your vote was successfully recorded on the blockchain.
+                Find it here: #[a(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${vote.tx.hash}`') nimiq.watch]
+                (verification may take 1-3 min.)
+        //- to be re-added later when showing past results
+        //- .nq-card-header(v-else-if='currentResults')
+        //-     h1 Voting results
+        //-     p.sub {{ resultsConfig.label }}
+        //-     Tooltip(:autoWidth='true' preferredPosition='bottom right' :container='$refs.app')
+        //-         InfoCircleSmallIcon(slot='trigger')
+        //-         | In total, {{ currentResults.stats.votes }} votes were casted representing
+        //-         | {{ Math.round(currentResults.stats.nim / 100000) }} NIM.
         .nq-card-header(v-else)
-            h1 Voting results
-            | {{ resultsConfig.label || resultsConfig.name }}
-        .nq-card-body(v-if='!currentResults') Loading... ({{ consensus ? 'consensus established, scanning blockchain' : 'waiting for consensus'}})
-        .nq-card-body(v-else-if='currentResults === false') Could not load results. Maybe the results are not available yet.
-        .nq-card-body(v-else-if='!currentResults.stats.votes')
-            span(v-if='isPreliminary') No results yet. It might take up to a few minutes for the results to show.
-            span(v-else) No votes were recorded in this election.
-        .nq-card-body(v-else)
-            section.graph
-                .result(v-for='result of currentResults.results')
-                    | {{ result.label}}: {{ Math.round(result.value / currentResults.stats.nim * 100) }}%.
-                    .debug(v-if='debug') maxVoteCount {{ maxVoteCount }}, maxValue: {{ maxChoiceValue }}Luna, percentPerLuna {{ percentPerLuna }}%, minWidth {{ minBarItemWidth }}
-                    .votes
-                        .vote(v-for='vote of result.votes'
-                            :title='`${vote.sender} - ${Math.round(vote.value / 100000)}NIM - ${(vote.value * percentPerLuna).toFixed(2)}%`'
-                            :style='`background: ${color(vote.sender)}; flex-grow: ${minBarItemWidth + vote.value * percentPerLuna};`')
-                        //- | ({{maxChoiceValue}} - {{result.value}}) * {{percentPerLuna}} = {{(maxChoiceValue - result.value) * percentPerLuna}}
-                        .vote(:style='`flex-grow: ${(maxChoiceValue - result.value) * percentPerLuna}`')
-            p.stats.
-                In total, {{ currentResults.stats.votes }} votes were casted representing
-                {{ Math.round(currentResults.stats.nim / 100000) }} NIM.
-            p(v-if='isPreliminary')
-                button.nq-button-pill(@click='showPreliminaryVotes()' v-show='height > resultHeight') refresh
-            p(v-else-if='votingConfig')
-                button.nq-button-pill(@click='showPreliminaryVotes()') show preliminary results of current voting
-        .nq-card-footer
 
-    .nq-card(v-if='pastVotings.length > 0')
-        .nq-card-header Past results
         .nq-card-body
-            .past-voting(v-for='past of pastVotings')
-                a.nq-link(@click='showPastVoting(past)') {{ past.label || past.name }}
+            p(v-if='currentResults === false') Could not load results. Maybe the results are not available yet.
+            p(v-else-if='!currentResults') Loading... ({{ consensus ? 'consensus established, scanning blockchain' : 'waiting for consensus'}})
+            p(v-else-if='!currentResults.stats.votes')
+                span(v-if='isPreliminary') No results yet. It might take a few minutes for the results to show.
+                span(v-else) No votes were recorded in this election.
+            section.graph(v-else)
+                .result(v-for='result of currentResults.results')
+                    .votes
+                        .vote.space(:style='`flex-grow: ${(maxChoiceValue - result.value) * barSizePerLuna}`')
+                        .vote(v-for='vote of result.votes'
+                            :class='{mini: barSizePerLuna * vote.value < minBarItemSize}'
+                            :title='`${vote.sender} - ${Math.round(vote.value / 100000)}NIM - ${(vote.value * percentPerLuna).toFixed(2)}%`'
+                            :style='`background: ${color(vote.sender)}; flex-grow: ${vote.value * barSizePerLuna};`')
+                    .label
+                        | {{ result.label}}
+                        .note {{ Math.round(result.value / currentResults.stats.nim * 100) }}%
+                    .debug(v-if='debug') maxVoteCount {{ maxVoteCount }}, maxValue: {{ maxChoiceValue }}Luna, percentPerLuna {{ percentPerLuna }}%, minSize {{ minBarItemSize }}
+            //- maybe re-added later or replaced - TBD
+            //- p(v-if='isPreliminary')
+            //-     button.nq-button-pill(@click='showPreliminaryVotes()' v-show='height > resultHeight') refresh
+            //- p(v-else-if='votingConfig')
+            //-     button.nq-button-pill(@click='showPreliminaryVotes()') show preliminary results of current voting
         .nq-card-footer
+            p Bars indicate the weight of a vote. #[br] Results are preliminary.
+            .note You can change your vote by voting again. #[br] The last vote counts.
+            button.vote-again.nq-button-s(@click='vote = null') Vote Again
+
+    //- to be re-added later
+    //- .nq-card(v-if='pastVotings.length > 0')
+    //-     .nq-card-header Past results
+    //-     .nq-card-body
+    //-         .past-voting(v-for='past of pastVotings')
+    //-             a.nq-link(@click='showPastVoting(past)') {{ past.label || past.name }}
+    //-     .nq-card-footer
