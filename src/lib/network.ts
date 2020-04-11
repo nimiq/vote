@@ -31,7 +31,7 @@ export async function watchApi(parameters: string, test = false): Promise<any> {
 export async function findTxBetween(
     address: string, minHeight: number, maxHeight: number, test = false,
 ): Promise<Tx[]> {
-    const page = 100;
+    const page = 50; // max size of nimiq.watch
     const voteTxs: Tx[] = [];
     for (let skip = 0; ; skip += page) {
         const txs: any[] = ((await watchApi(`account-transactions/${address}/${page}/${skip}`, test)) as any[])
