@@ -31,7 +31,7 @@
             p.sub(v-else-if='type === VoteTypes.weightedChoice') Please weigh the items by preference.
             p.sub(v-else-if='type === VoteTypes.ranking') Please rank the items by preference.
 
-            Tooltip(:autoWidth='true' preferredPosition='bottom right' :container='$refs.app')
+            Tooltip(:autoWidth='true' preferredPosition='bottom right')
                 InfoCircleSmallIcon(slot='trigger')
                 | This poll is open until block {{ '#'+votingConfig.end }}
                 .small ~ {{ timeRemaining }}
@@ -75,7 +75,7 @@
         //- .nq-card-header(v-else-if='currentResults')
         //-     h1 Voting results
         //-     p.sub {{ resultsConfig.label }}
-        //-     Tooltip(:autoWidth='true' preferredPosition='bottom right' :container='$refs.app')
+        //-     Tooltip(:autoWidth='true' preferredPosition='bottom right')
         //-         InfoCircleSmallIcon(slot='trigger')
         //-         | In total, {{ currentResults.stats.votes }} votes were casted representing
         //-         | {{ Math.round(currentResults.stats.nim / 100000) }} NIM.
