@@ -171,7 +171,7 @@ export default class App extends Vue {
     @Watch('currentResults')
     makeColors() {
         if (!this.currentResults) return; // no results, no colors.
-        const colors = Math.min(this.currentResults.stats.votes, 100);
+        const colors = Math.min(this.currentResults.stats.votes * 2, 100);
         console.log(`Making ${colors} beautiful colors...`);
         this.colors = distinctColors({
             count: colors,

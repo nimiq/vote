@@ -100,6 +100,7 @@ p
         align-items center
         font-size 2.5rem
         line-height 1
+        cursor pointer
 
   &.singleChoice, &.multipleChoice
     .choices
@@ -172,14 +173,14 @@ p
           flex-shrink 0
           width 8rem
           min-height .375rem
-          margin-bottom .375rem
+          margin-top .375rem
           overflow hidden
           border-radius .5rem
           &:not(.space)
             box-shadow inset -2.25rem -2.25rem 3rem -2rem rgba(0,0,0,.1)
 
-          &.mini + &.mini
-            margin-bottom 0
+          // &.mini + .mini
+          //   margin-top 0
 
 
       .label
