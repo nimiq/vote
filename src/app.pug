@@ -53,8 +53,9 @@
                     input.slider(:id='choice.name' type='range' min='0' max='99' v-model.number='choice.weight')
 
             .choices(v-else-if='type === VoteTypes.ranking')
-                .number(v-for='(choice, index) of choices' :key='choice.name') {{ index + 1 }}
-                draggable(v-model="choices" group="choices" @start="drag=true" @end="drag=false")
+                .left
+                    .number(v-for='(choice, index) of choices' :key='choice.name') {{ index + 1 }}
+                draggable.right(v-model="choices" group="choices" @start="drag=true" @end="drag=false")
                     .choice(v-for='choice of choices' :key='choice.name') {{ choice.label }}
 
         .nq-card-footer

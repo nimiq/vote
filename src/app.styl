@@ -140,17 +140,52 @@ p
         flex-basis  calc(33.333% - 1rem)
         height 12.5rem
 
-    // .choice
-    //   label
-    //     min-width 10em
-    //     display inline-block
-    //   .ranking &
-    //     cursor: move
-    //     &:before
-    //       content "⇅ "
-    //       opacity  .333
-    //     &.sortable-ghost
-    //       opacity .333
+  &.ranking
+    .choices
+      flex-direction row
+      justify-content center
+      // height 100%
+      height = 4.25rem
+
+      .left, .right
+        display flex
+        flex-direction column
+
+        .number, .choice
+          height height
+          margin-bottom 1rem
+          border-radius .5rem
+          font-weight bold
+          font-size 2.5rem
+          line-height height
+
+      .left
+        flex 0
+
+        .number
+          border .25rem solid rgba(nimiq-blue, .16)
+          color rgba(nimiq-blue, .4)
+          width height
+          line-height (height - .4rem)
+          margin-right 1rem
+
+      .right
+
+        .choice
+          background rgba(nimiq-blue, .06)
+          background-image url("/img/grip.svg")
+          background-repeat no-repeat
+          background-position 1rem center
+          color nimiq-blue
+          padding 0 1rem 0 3rem
+          text-align left
+          cursor move
+          // flex 0
+          // display flex
+          // flex-direction row
+          // justify-content space-between
+          // align-items center
+
   .note
     line-height 2.625rem
 
@@ -159,7 +194,8 @@ p
     flex 1
     display flex
     flex-direction row
-    justify-content center
+    // TODO center breaks when scrolling starts, safe doesn't seem to help :(
+    justify-content safe center
     overflow auto
 
     .result
