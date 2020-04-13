@@ -17,7 +17,7 @@ export async function watchApi(parameters: string, test = false): Promise<any> {
     return new Promise((resolve, reject) => {
         setTimeout(async () => {
             try {
-                const url = `https://${test ? 'test-' : ''}api.nimiq.watch/${parameters}`;
+                const url = `https://${test ? 'test-' : ''}api.nimiqwatch.com/${parameters}`;
                 const result = await fetchJson(url);
                 watchApiCallsWaiting--;
                 resolve(result);
