@@ -59,7 +59,7 @@
                     .choice(v-for='choice of choices' :key='choice.name') {{ choice.label }}
 
         .nq-card-footer
-            p Make your choice and vote by sending a fraction of a NIM. This is a weighted vote: Every NIM in your wallet equals one vote.
+            p Make your choice and vote by sending a fraction of a NIM. This is a weighted vote: Every NIM in your address equals one vote.
             button.nq-button.light-blue(@click='submitVote' :disabled='!height || !canVote') {{ height ? 'vote' : 'waiting for chain height' }}
             .note Votes are stored on the blockchain.
 
@@ -69,8 +69,8 @@
         .nq-card-header(v-if='voted')
             h1 Thank you for voting!
             p.sub.
-                Your vote was successfully recorded on the blockchain.
-                Find it here: #[a(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${vote.tx.hash}`') nimiq.watch]
+                Your vote was successfully recorded on the blockchain. Find it here:
+                #[a.nq-link(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${vote.tx.hash}`' target='_blank') nimiq.watch]
                 (verification may take 1-3 min.)
         //- to be re-added later when showing past results
         //- .nq-card-header(v-else-if='currentResults')
