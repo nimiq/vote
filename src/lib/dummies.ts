@@ -57,21 +57,21 @@ export const dummyResult = {
 const rankingConfig = [{
     start: 923198,
     end: 934298,
-    label: 'What\'s the best ice cream?',
-    name: 'best ice cream',
+    label: 'What is the optimal supply curve?',
+    name: 'pick-curve',
     type: VoteTypes.ranking,
     choices: [{
-        name: 'vanilla',
-        label: 'Vanilla',
+        name: 'green',
+        label: 'Green curve',
     }, {
-        name: 'chocolate',
-        label: 'Chocolate',
+        name: 'red',
+        label: 'Red curve',
     }, {
-        name: 'strawberry',
-        label: 'Strawberry',
+        name: 'blue',
+        label: 'Blue curve',
     }, {
         name: 'none',
-        label: 'I don\'t like ice cream.',
+        label: 'None of the choices',
     }],
 }, {
     start: 100,
@@ -120,4 +120,4 @@ const singleChoiceConfig = [{
     results: 'chocolate-vs-vanilla-2018',
 }];
 
-export const dummyConfig = singleChoiceConfig;
+export const dummyConfig = rankingConfig;
