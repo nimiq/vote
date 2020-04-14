@@ -1,5 +1,5 @@
 export const production = false;
-const specialConfig = false;
+const specialConfig = 'staging';
 const useDummies = false;
 const showDebugging = false;
 
