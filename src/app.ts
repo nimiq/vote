@@ -109,7 +109,13 @@ export default class App extends Vue {
                 this.votingAddress = await voteAddress(this.votingConfig, true);
             } else throw new Error('No choices for this voting found.');
         }
-        this.pastVotings = this.configs.filter((config) => config.end <= height);
+        this.pastVotings = this.configs
+            .filter((config) => config.end <= height)
+            .sort((a, b) => b.end - a.end); // latest first
+        const [latestVoting] = this.pastVotings;
+        if (!this.votingConfig && latestVoting) { // no voting right now, try loading latest results
+            await this.showFinalResults(latestVoting);
+        }
 
         console.log('Loading voting app: Parsed config', new Date().getTime() - start, this.choices);
         this.loading = false;
@@ -143,13 +149,9 @@ export default class App extends Vue {
             this.consensus = state === Nimiq.Client.ConsensusState.ESTABLISHED;
         });
         client.addHeadChangedListener(async () => {
-            // getHeadHeight return 1 the first time
-            // console.log('$$$$$$$$$$', this.height);
-            // this.height = Math.max(this.height, await client.getHeadHeight());
             this.height = await client.getHeadHeight();
-            // console.log('$$$$$$$$$$', this.height);
             if (this.votingConfig?.end === this.height) {
-                const results = await this.showPreliminaryVotes();
+                const results = await this.showPreliminaryResults();
                 console.warn(`Voting results for ${this.votingConfig.name}:`);
                 console.log(JSON.stringify(results));
                 console.log(results);
@@ -160,7 +162,10 @@ export default class App extends Vue {
         await Vue.nextTick();
 
         await client.waitForConsensusEstablished();
-        if (this.votingConfig && !this.currentResults) await this.showPreliminaryVotes();
+        if (!this.votingConfig && latestVoting && !this.currentResults) { // no voting, no final results > show prelim.
+            this.showPreliminaryResults(latestVoting);
+        }
+        if (this.votingConfig && !this.currentResults) await this.showPreliminaryResults();
 
         console.log('Loading voting app: Counted votes',
             new Date().getTime() - start,
@@ -206,7 +211,7 @@ export default class App extends Vue {
     }
 
     async submitVote() {
-        const { votingConfig: config, hub, height } = this;
+        const { votingConfig: config, hub, height, votingAddress } = this;
         const vote: BaseVote = { name: config!.name, choices: this.serializeChoices() };
         const serialized = serializeVote(vote, config!.type);
         console.log('Submitted vote:', serialized);
@@ -215,7 +220,7 @@ export default class App extends Vue {
         const signedTransaction = await hub.checkout({
             appName: 'Nimiq Voting App',
             shopLogoUrl: appLogo,
-            recipient: this.votingAddress!,
+            recipient: votingAddress!,
             value: 1,
             extraData: serialized,
             validityDuration: Math.min(120, config!.end - height),
@@ -238,16 +243,16 @@ export default class App extends Vue {
     }
 
     async countVotes(config = this.votingConfig!): Promise<ElectionResults> {
+        if (!this.consensus) throw new Error('Consensus required but not established yet.');
         const client = this.client!;
         const height = await client.getHeadHeight();
         const end = Math.min(config.end, height);
-        const address = this.votingAddress!.replace(' ', '');
+        const address = await voteAddress(config, false);
         const votes: CastVote<BaseVote>[] = [];
         const addresses: string[] = [];
         const stats: any = {};
+        let log = `Address: ${address}\nStart: ${config.start}\nEnd: ${end}\nCurrent height: ${height}\n\n`;
 
-        if (this.preliminaryResults && this.resultHeight >= height) return this.preliminaryResults;
-        this.resultHeight = height;
         await Vue.nextTick();
 
         console.log('counting votes: find all votes', config);
@@ -255,6 +260,7 @@ export default class App extends Vue {
 
         // find all votes
         (await findTxBetween(address, config.start, end, testnet)).forEach((tx) => {
+            console.log(JSON.stringify(tx, null, ' '));
             if (addresses.includes(tx.sender)) return; // only last vote countes
             try {
                 // eslint-disable-next-line
@@ -274,6 +280,7 @@ export default class App extends Vue {
         });
 
         stats.votes = votes.length;
+        log += `Counted votes:\n${JSON.stringify(votes, null, ' ')}\n\n`;
         console.log('counting votes: calculate balance', new Date().getTime() - start, addresses, votes);
 
         // calculate account balance at config.end height and store it in vote.value
@@ -289,6 +296,8 @@ export default class App extends Vue {
         }
 
         stats.nim = votes.map((v) => v.value).reduce((v1, v2) => v1 + v2, 0);
+        const balances = votes.map((vote) => ({ address: vote.tx.sender, balance: vote.value }));
+        log += `Balances at the last voting block:\n${JSON.stringify(balances, null, ' ')}\n\n`;
         console.log('counting votes: summarize', new Date().getTime() - start, votes);
 
         // summarize votes
@@ -308,10 +317,11 @@ export default class App extends Vue {
             }
         }
 
+        log += `NIM per choice:\n${JSON.stringify(sum, null, ' ')}\n\n`;
         console.log('counting votes: return', new Date().getTime() - start, sum, votesPerChoice);
 
         // format result
-        this.preliminaryResults = {
+        const results = {
             label: config.label || config.name,
             results: config.choices.map((choice) => ({
                 label: choice.label || choice.name,
@@ -321,20 +331,33 @@ export default class App extends Vue {
             stats,
         };
 
-        return this.preliminaryResults;
+        log += `Results:\n${JSON.stringify(results, null, ' ')}\n\n`;
+        console.log(`Voting log\n\n${log}`);
+        return results;
     }
 
-    async showPreliminaryVotes(): Promise<ElectionResults> {
-        if (!this.votingConfig) throw new Error('No on-going voting.');
-        // this.loadingResults = true;
+    async showPreliminaryResults(config = this.votingConfig!) {
+        if (!config) throw new Error('No on-going voting.');
         this.currentResults = null;
-        this.resultsConfig = this.votingConfig;
-        this.currentResults = await this.countVotes(this.votingConfig);
-        // this.loadingResults = false;
+        this.resultsConfig = config;
+
+        const height = await this.client!.getHeadHeight();
+        if (this.resultHeight < height) {
+            if (this.preliminaryResults) this.currentResults = this.preliminaryResults;
+            this.resultHeight = height;
+            this.$nextTick()
+                .then(() => this.countVotes(config))
+                .then((results) => {
+                    this.preliminaryResults = results;
+                    this.currentResults = results;
+                });
+        }
+
+        this.currentResults = this.preliminaryResults;
         return this.currentResults;
     }
 
-    async showPastVoting(config: Config) {
+    async showFinalResults(config: Config) {
         this.currentResults = null;
         this.resultsConfig = config;
         try {
@@ -366,7 +389,6 @@ export default class App extends Vue {
         const days = Math.floor(blocks / (24 * 60));
         const hours = Math.floor((blocks - days * 24 * 60) / 60);
         const minutes = blocks - (days * 24 + hours) * 60;
-        // return `${hours}:${minutes < 10 ? `0${minutes}` : minutes}`;
         return days === 0 && hours === 0
             ? `${minutes} minutes`
             : days === 0
@@ -383,18 +405,13 @@ export default class App extends Vue {
         return `count-${choices} ${[2, 4].includes(choices) ? 'two' : 'three'} ${choices > 3 ? 'wrap' : ''} `;
     }
 
-    // current results
-    // get pixelPerNIM(): number {
-    //     return this.maxWidth / this.maxChoiceValue;
-    // }
-
+    // results
     readonly minBarItemSize = .375;
     get percentPerLuna(): number {
         return 100 / (this.currentResults as ElectionResults).stats.nim;
     }
 
     get barSizePerLuna(): number {
-        // return (100 - this.maxVoteCount * this.minBarItemSize) / this.maxChoiceValue;
         return 100 / this.maxChoiceValue;
     }
 
@@ -404,14 +421,6 @@ export default class App extends Vue {
             .reduce((a, b) => Math.max(a, b));
     }
 
-    // get maxWidth(): number {
-    //     console.log('maxWidth', this.$refs);
-    //     const maxVotes = (this.currentResults as ElectionResults).results
-    //         .map((result) => result.votes.length)
-    //         .reduce((a, b) => Math.max(a, b));
-    //     return (this.$refs.results as HTMLElement)?.offsetWidth - 70 - maxVotes * 2;
-    // }
-
     get maxChoiceValue(): number {
         return (this.currentResults as ElectionResults).results
             .map((result) => result.value)
@@ -419,7 +428,8 @@ export default class App extends Vue {
     }
 
     get isPreliminary(): boolean {
-        return this.resultsConfig!.end > this.height;
+        // return this.resultsConfig!.end > this.height;
+        return this.currentResults === this.preliminaryResults;
     }
 
     color(address: string): string {
