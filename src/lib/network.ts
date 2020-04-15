@@ -36,8 +36,6 @@ export async function findTxBetween(
     for (let skip = 0; ; skip += page) {
         const txs: any[] = ((await watchApi(`account-transactions/${address}/${page}/${skip}`, test)) as any[])
             .sort((a, b) => b.block_height - a.block_height); // newest/highest first
-        // if (txs.length && txs[txs.length - 1]?.block_height > maxHeight) continue; // looking for older TX
-        // console.log(skip, txs.map((tx) => ({ tx, data: atob(tx.data) })));
         txs.filter((tx) => tx.block_height >= minHeight && tx.block_height <= maxHeight).forEach((tx) => voteTxs.push({
             hash: tx.hash,
             sender: tx.sender_address,
@@ -46,7 +44,7 @@ export async function findTxBetween(
             data: atob(tx.data),
             height: tx.block_height,
         }));
-        if (txs.length === 0 || txs[txs.length - 1]?.block_height < minHeight) break; // done
+        if (txs.length === 0 || txs.length < page || txs[txs.length - 1]?.block_height < minHeight) break; // done
     }
     return voteTxs;
 }
