@@ -21,9 +21,26 @@
         div resultsConfig {{ resultsConfig }}
         div results {{ currentResults }}
 
+    // currently no voting ////////////////////////////////////////////////////
+
+    .nq-card.voting(v-if='!votingConfig')
+        .nq-card-header
+            h1 Hello there!
+            p.sub Currently no voting.
+        .nq-card-body
+            p.
+                No voting is taking place at this moment. Follow us on
+                #[a(href='https://twitter.com/nimiq') Twitter]
+                or join us on
+                #[a(href='https://t.me/joinchat/AAAAAEJW-ozFwo7Er9jpHw') Telegam]
+                and
+                #[a(href='https://www.nimiq.com/community/') many more social channels]
+                to stay up-to-date.
+            p Looking forward to chat with you!
+
     // voting /////////////////////////////////////////////////////////////////
 
-    .nq-card.voting(v-if='votingConfig && !voted' :class='type')
+    .nq-card.voting(v-else-if='votingConfig && !voted' :class='type')
         .nq-card-header
             h1 {{ votingConfig.label }}
             p.sub(v-if='type === VoteTypes.singleChoice') Please choose your preference.
