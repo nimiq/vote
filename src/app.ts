@@ -397,7 +397,7 @@ export default class App extends Vue {
     }
 
     get voted(): boolean {
-        return this.votingConfig?.name === this.vote?.vote.name;
+        return !!this.vote && this.votingConfig?.name === this.vote.vote.name;
     }
 
     get choicesStyle(): string {
