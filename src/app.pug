@@ -23,7 +23,7 @@
 
     // currently no voting ////////////////////////////////////////////////////
 
-    .nq-card.voting(v-if='!votingConfig')
+    .nq-card.voting(v-if='!votingConfig && !currentResults')
         .nq-card-header
             h1 Hello there!
             p.sub Currently no voting.
@@ -35,8 +35,8 @@
                 #[a(href='https://t.me/joinchat/AAAAAEJW-ozFwo7Er9jpHw') Telegam]
                 and
                 #[a(href='https://www.nimiq.com/community/') many more social channels]
-                to stay up-to-date.
-            p Looking forward to chat with you!
+                to stay up-to-date. Looking forward to chat with you!
+            p(v-if='pastVotings.length') Loading latest results...
 
     // voting /////////////////////////////////////////////////////////////////
 
@@ -98,6 +98,8 @@
         //-         | In total, {{ currentResults.stats.votes }} votes were casted representing
         //-         | {{ Math.round(currentResults.stats.nim / 100000) }} NIM.
         .nq-card-header(v-else)
+            h1 {{ resultsConfig.label }}
+            p.sub Voting results
 
         .nq-card-body
             p(v-if='currentResults === false') Could not load results. Maybe the results are not available yet.
@@ -123,7 +125,8 @@
             //- p(v-else-if='votingConfig')
             //-     button.nq-button-pill(@click='showPreliminaryVotes()') show preliminary results of current voting
         .nq-card-footer
-            p Bars indicate the weight of a vote. #[br] Results are preliminary.
+            p Bars indicate the weight of a vote.
+                .preliminary(v-if='isPreliminary') Results are preliminary.
             .note You can change your vote by voting again. #[br] The last vote counts.
             button.vote-again.nq-button-s(@click='vote = null') Vote Again
 
