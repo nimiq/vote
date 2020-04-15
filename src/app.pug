@@ -126,7 +126,7 @@
             //-     button.nq-button-pill(@click='showPreliminaryVotes()') show preliminary results of current voting
         .nq-card-footer
             p Bars indicate the weight of a vote.
-                .preliminary(v-if='isPreliminary') Results are preliminary.
+                span.preliminary(v-if='isPreliminary') #[br] Results are preliminary.
             .note You can change your vote by voting again. #[br] The last vote counts.
             button.vote-again.nq-button-s(@click='vote = null') Vote Again
 
