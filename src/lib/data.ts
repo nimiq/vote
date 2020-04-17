@@ -41,7 +41,7 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
         `Names must not include "${ELEMENT_SEPARATOR}" and "${WEIGHT_SEPARATOR}".`,
     );
     if (names.includes(' ')) {
-        console.warn('Using spaces in names is OK, but not recommened.');
+        console.warn('Using spaces in names is not recommened.');
     }
 
     // valid config type
