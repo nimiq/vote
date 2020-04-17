@@ -3,7 +3,7 @@ import { toBase32, ibanCheck, CCODE } from './core';
 import { VoteTypes, BaseVote, SingleChoiceVote, WeightedCoicesVote, MultipleChoiceVote, RankingVote, WeightedChoice,
     Config } from './types';
 
-export const ELEMENT_SEPARATOR = '/';
+export const ELEMENT_SEPARATOR = ' ';
 export const WEIGHT_SEPARATOR = ':';
 
 export function parseVote(message: string, type: VoteTypes.singleChoice): SingleChoiceVote;
