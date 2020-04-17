@@ -60,6 +60,7 @@ const rankingConfig = [{
     label: 'What is the optimal supply curve?',
     name: 'pick-curve',
     type: VoteTypes.ranking,
+    link: 'https://www.nimiq.com/blog/nimiq-20-supply-curve-voting/',
     choices: [{
         name: 'green',
         label: 'Green curve',
@@ -94,9 +95,10 @@ const rankingConfig = [{
 const singleChoiceConfig = [{
     start: 920884,
     end: 1040884,
-    label: 'Should Nimiq adjust its supply curve?',
+    label: 'Should the NIM supply growth curve be adjusted?',
     name: 'change-curve',
     type: VoteTypes.singleChoice,
+    link: 'https://www.nimiq.com/blog/nimiq-20-supply-curve-voting/',
     choices: [{
         name: 'yes',
         label: 'Yes',
@@ -120,4 +122,4 @@ const singleChoiceConfig = [{
     results: 'chocolate-vs-vanilla-2018',
 }];
 
-export const dummyConfig = rankingConfig;
+export const dummyConfig = singleChoiceConfig;
