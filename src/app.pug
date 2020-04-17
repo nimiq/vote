@@ -80,7 +80,7 @@
                     .choice(v-for='choice of choices' :key='choice.name') {{ choice.label }}
 
         .nq-card-footer
-            p.rules Vote by sending 0.00001 NIM. Every NIM in your address at the end of the voting period equals one vote.
+            p.rules Vote by sending 0.00001 NIM. #[br] Every NIM in your address at the end of the voting period equals one vote.
             button.nq-button.light-blue(@click='submitVote' :disabled='!height || !canVote') {{ height ? 'vote' : 'waiting for chain height' }}
             .note Votes are stored publicly on the blockchain.
 
