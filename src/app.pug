@@ -43,10 +43,14 @@
     .nq-card.voting(v-else-if='votingConfig && !voted' :class='type')
         .nq-card-header
             h1 {{ votingConfig.label }}
-            p.sub(v-if='type === VoteTypes.singleChoice') Please choose your preference.
-            p.sub(v-else-if='type === VoteTypes.multipleChoice') Select one or more options.
-            p.sub(v-else-if='type === VoteTypes.weightedChoice') Please weigh the items by preference.
-            p.sub(v-else-if='type === VoteTypes.ranking') Please rank the items by preference.
+            p.sub
+                span(v-if='type === VoteTypes.singleChoice') Please make your choice.
+                span(v-else-if='type === VoteTypes.multipleChoice') Please select one or more options.
+                span(v-else-if='type === VoteTypes.weightedChoice') Please weigh the items by preference.
+                span(v-else-if='type === VoteTypes.ranking') Please rank the items by preference.
+                span(v-if='votingConfig.link')
+                    br
+                    a.nq-link(:href="votingConfig.link" target='_blank') Click here for more info.
 
             Tooltip(:autoWidth='true' preferredPosition='bottom left')
                 InfoCircleSmallIcon(slot='trigger')
@@ -76,9 +80,9 @@
                     .choice(v-for='choice of choices' :key='choice.name') {{ choice.label }}
 
         .nq-card-footer
-            p Make your choice and vote by sending a fraction of a NIM. This is a weighted vote: Every NIM in your address equals one vote.
+            p.rules Vote by sending 0.00001 NIM. Every NIM in your address at the end of the voting period equals one vote.
             button.nq-button.light-blue(@click='submitVote' :disabled='!height || !canVote') {{ height ? 'vote' : 'waiting for chain height' }}
-            .note Votes are stored on the blockchain.
+            .note Votes are stored publicly on the blockchain.
 
     // results ////////////////////////////////////////////////////////////////
 
@@ -107,7 +111,7 @@
             p(v-else-if='!currentResults.stats.votes')
                 span(v-if='isPreliminary') No results yet. It might take a few minutes for the results to show.
                 span(v-else) No votes were recorded in this election.
-            section.graph(v-else)
+            section.graph(v-else :class='{many: currentResults.results.length > 3}')
                 .result(v-for='result of currentResults.results')
                     .votes
                         .vote.space(:style='`flex-grow: ${(maxChoiceValue - result.value) * barSizePerLuna}`')
@@ -127,8 +131,9 @@
         .nq-card-footer
             p Bars indicate the weight of a vote.
                 span.preliminary(v-if='isPreliminary') #[br] Results are preliminary.
-            .note You can change your vote by voting again. #[br] The last vote counts.
-            button.vote-again.nq-button-s(@click='vote = null') Vote Again
+            .vote-again(v-if='votingConfig')
+                .note You can change your vote by voting again. #[br] The last vote counts.
+                button.vote-again.nq-button-s(@click='vote = null') Vote Again
 
     //- to be re-added later
     //- .nq-card(v-if='pastVotings.length > 0')
