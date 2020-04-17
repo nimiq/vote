@@ -57,7 +57,7 @@ export type Config = {
     name: string, // short, will be on the blockchain
     label: string, // short description of the purpose of the voting
     choices: Choice[],
-    // results?: string,
+    link?: string, // to additional info and instructions
 }
 
 // App
