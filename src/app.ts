@@ -290,7 +290,7 @@ export default class App extends Vue {
             if (height > config.end) {
                 (await findTxBetween(sender, end, height, testnet)).forEach((tx) => {
                     if (tx.recipient === sender) vote.value -= tx.value;
-                    if (tx.sender === sender) vote.value += tx.value;
+                    if (tx.sender === sender) vote.value += tx.value + tx.fee;
                 });
             }
         }

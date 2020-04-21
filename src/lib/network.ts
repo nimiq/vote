@@ -3,6 +3,7 @@ export type Tx = {
     sender: string,
     recipient: string,
     value: number,
+    fee: number,
     data: string,
     height: number,
 }
@@ -41,6 +42,7 @@ export async function findTxBetween(
             sender: tx.sender_address,
             recipient: tx.receiver_address,
             value: tx.value,
+            fee: tx.fee,
             data: atob(tx.data),
             height: tx.block_height,
         }));
