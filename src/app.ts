@@ -289,44 +289,62 @@ export default class App extends Vue {
             const { sender } = vote.tx;
             vote.value = (await client.getAccount(sender))?.balance;
             if (height > config.end) {
+                // After the vote ended, we need to compute what each address's balance was at the end
+                // of the vote. For that, we get the transaction history between now and the end of the
+                // vote, and recreate the balance from that.
                 (await findTxBetween(sender, end, height, testnet)).forEach((tx) => {
+                    // Subtract all NIM that the address received after the vote ended
                     if (tx.recipient === sender) vote.value -= tx.value;
+                    // Add all NIM that the address sent after the vote ended
                     if (tx.sender === sender) vote.value += tx.value + tx.fee;
                 });
             }
         }
 
-        stats.nim = votes.map((v) => v.value).reduce((v1, v2) => v1 + v2, 0);
+        stats.nim = votes.reduce((sum, vote) => sum + vote.value, 0);
+
         const balances = votes.map((vote) => ({ address: vote.tx.sender, balance: vote.value }));
         log += `Balances at the last voting block:\n${JSON.stringify(balances, null, ' ')}\n\n`;
         console.log('counting votes: summarize', new Date().getTime() - start, votes);
 
         // summarize votes
-        const sum = new Map<string, number>(config.choices.map((choice) => [choice.name, 0]));
+        const sums = new Map<string, number>(config.choices.map((choice) => [choice.name, 0]));
         const votesPerChoice = new Map<string, ElectionVote[]>(config.choices.map((choice) => [choice.name, []]));
+
+        // Process each eligible vote
         for (const vote of votes) {
             console.log(vote);
-            const total = voteTotalWeight(vote.vote.choices);
+            const totalWeight = voteTotalWeight(vote.vote.choices);
             for (const choice of vote.vote.choices) {
-                const old = sum.get(choice.name);
-                if (old !== undefined) { // a choice that is not configured
-                    console.log(choice.name, old + (choice.weight / total) * vote.value, choice.weight, vote.value);
-                    const value = (choice.weight / total) * vote.value;
-                    sum.set(choice.name, old + value);
-                    votesPerChoice.get(choice.name)!.push({ sender: vote.tx.sender, height: vote.tx.height, value });
-                }
+                const oldSum = sums.get(choice.name);
+                if (!oldSum) continue; // Invalid choice
+
+                // Calculate the weighted value of this choice
+                const choiceValue = (choice.weight / totalWeight) * vote.value;
+
+                // Add the value to the global sum of this choice
+                const newSum = oldSum + choiceValue;
+                sums.set(choice.name, newSum);
+
+                votesPerChoice.get(choice.name)!.push({
+                    sender: vote.tx.sender,
+                    height: vote.tx.height,
+                    value: choiceValue,
+                });
+
+                console.log(choice.name, newSum, choice.weight, vote.value);
             }
         }
 
-        log += `NIM per choice:\n${JSON.stringify(sum, null, ' ')}\n\n`;
-        console.log('counting votes: return', new Date().getTime() - start, sum, votesPerChoice);
+        log += `NIM per choice:\n${JSON.stringify(sums, null, ' ')}\n\n`;
+        console.log('counting votes: return', new Date().getTime() - start, sums, votesPerChoice);
 
         // format result
         const results = {
             label: config.label || config.name,
             results: config.choices.map((choice) => ({
                 label: choice.label || choice.name,
-                value: sum.get(choice.name)!,
+                value: sums.get(choice.name)!,
                 votes: votesPerChoice.get(choice.name)!,
             })).sort((a, b) => b.value - a.value), // highest first
             stats,
