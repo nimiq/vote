@@ -301,15 +301,15 @@ export default class App extends Vue {
             );
         }
 
-        // Get balances for address groups
-        for (const group of addressGroups) {
+        // Get balances for address groups in parallel
+        await Promise.all(addressGroups.map(async (group) => {
             const accounts = await client.getAccounts(group);
             accounts.forEach((account, i) => {
                 const address = group[i];
                 // NOTE: The balance includes not-yet-vested NIM in vesting contracts
                 balancesByAddress.set(address, account.balance);
             });
-        }
+        }));
 
         for (const vote of votes) {
             const { sender } = vote.tx;
