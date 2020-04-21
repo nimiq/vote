@@ -26,12 +26,16 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
         : dummyResult;
 }
 
-// use this function to valid configuration settings
+// use this function to validate configuration settings
 (window as any).votingAppValidateConfig = function votingAppValidateConfig(config: Config, height: number) {
+    // basics
+    console.assert(config.start < config.end, 'End must be greater than start.');
+    console.assert(!!config.name && config.choices.filter((choice) => !!choice.name).length === 0, 'no empty names');
+
     // choices need to be unique
     console.assert(
         config.choices.length === unique(config.choices.map((choice) => choice.name)).length,
-        'Choices must be unique, i.e. names not used twice.',
+        'Choices must be unique, i.e. names must not be used twice.',
     );
 
     // no special characters have been used
@@ -48,10 +52,10 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
     console.assert(
         Object.values(VoteTypes).includes(config.type),
         `The config type ${config.type} is invalid. Should be one of ${Object.values(VoteTypes)}.
-        Use the VoteTypes enum to get a valid type.`,
+        Use the VoteTypes enum for valid types.`,
     );
 
-    // max serialized vote = 64 bytes?
+    // max serialized vote <= 64 bytes?
     const serialized = serializeVote({
         name: config.name,
         choices: config.choices.map((choice) => ({ name: choice.name, weight: 100 })),
@@ -61,14 +65,10 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
         `Names are too long. Votes for this config might be up to ${serialized.length} bytes, maximum is 64 bytes.`,
     );
 
-    // simple stuff
-    console.assert(config.start < config.end, 'End must be greater than start.');
-    console.assert(!!config.name && config.choices.filter((choice) => !!choice.name).length === 0, 'no empty names');
-
     if (height) {
         const now = new Date().getTime();
         const start = new Date(now + (config.start - height) * 60000);
         const end = new Date(now + (config.end - height) * 60000);
-        console.log(`The voting will approx. start at ${start} end end at ${end}.`);
+        console.log(`The voting will approx. start at ${start} and end at ${end}.`);
     }
 };
