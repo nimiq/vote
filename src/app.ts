@@ -247,11 +247,11 @@ export default class App extends Vue {
         const client = this.client!;
         const height = await client.getHeadHeight();
         const end = Math.min(config.end, height);
-        const address = await voteAddress(config, false);
+        const votingAddress = await voteAddress(config, false);
         const votes: CastVote<BaseVote>[] = [];
         const addresses: string[] = [];
         const stats: any = {};
-        let log = `Address: ${address}\nStart: ${config.start}\nEnd: ${end}\nCurrent height: ${height}\n\n`;
+        let log = `Address: ${votingAddress}\nStart: ${config.start}\nEnd: ${end}\nCurrent height: ${height}\n\n`;
 
         await Vue.nextTick();
 
@@ -259,7 +259,7 @@ export default class App extends Vue {
         const start = new Date().getTime();
 
         // find all votes
-        (await findTxBetween(address, config.start, end, testnet)).forEach((tx) => {
+        (await findTxBetween(votingAddress, config.start, end, testnet)).forEach((tx) => {
             console.log(JSON.stringify(tx, null, ' '));
             if (addresses.includes(tx.sender)) return; // only last vote countes
             try {
@@ -284,9 +284,35 @@ export default class App extends Vue {
         console.log('counting votes: calculate balance', new Date().getTime() - start, addresses, votes);
 
         // calculate account balance at config.end height and store it in vote.value
+
+        // Request accounts from the network in bulk to not get rate-limited
+        const balancesByAddress = new Map<string, number>();
+        // Collect unique voting addresses
+        for (const vote of votes) {
+            balancesByAddress.set(vote.tx.sender, 0);
+        }
+        // Group addresses into network request groups
+        const allAddresses = [...balancesByAddress.keys()];
+        const addressGroups = [];
+        for (let i = 0; i < allAddresses.length; i += Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT) {
+            addressGroups.push(
+                allAddresses.slice(i, Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT),
+            );
+        }
+
+        // Get balances for address groups
+        for (const group of addressGroups) {
+            const accounts = await client.getAccounts(group);
+            accounts.forEach((account, i) => {
+                const address = group[i];
+                // NOTE: The balance includes not-yet-vested NIM in vesting contracts
+                balancesByAddress.set(address, account.balance);
+            });
+        }
+
         for (const vote of votes) {
             const { sender } = vote.tx;
-            vote.value = (await client.getAccount(sender))?.balance;
+            vote.value = balancesByAddress.get(sender)!;
             if (height > config.end) {
                 (await findTxBetween(sender, end, height, testnet)).forEach((tx) => {
                     if (tx.recipient === sender) vote.value -= tx.value;
