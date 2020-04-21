@@ -258,6 +258,14 @@ export default class App extends Vue {
         console.log('counting votes: find all votes', config);
         const start = new Date().getTime();
 
+        const validChoices = config.choices.map((choice) => choice.name);
+        function isValidChoices(choices: BaseChoice[]): boolean {
+            for (const choice of choices) {
+                if (!validChoices.includes(choice.name)) return false;
+            }
+            return true;
+        }
+
         // find all votes
         (await findTxBetween(address, config.start, end, testnet)).forEach((tx) => {
             console.log(JSON.stringify(tx, null, ' '));
@@ -266,7 +274,7 @@ export default class App extends Vue {
                 // eslint-disable-next-line
                 const { hash, sender, value, data, height } = tx;
                 const vote = parseVote(data, config.type);
-                if (vote.name === config.name) {
+                if (vote.name === config.name && isValidChoices(vote.choices)) {
                     votes.push({
                         vote,
                         serialized: data,
