@@ -416,15 +416,15 @@ export default class App extends Vue {
     }
 
     get maxVoteCount(): number {
-        return (this.currentResults as ElectionResults).results
-            .map((result) => result.votes.length)
-            .reduce((a, b) => Math.max(a, b));
+        const allVoteCounts = (this.currentResults as ElectionResults).results
+            .map((result) => result.votes.length);
+        return Math.max(...allVoteCounts);
     }
 
     get maxChoiceValue(): number {
-        return (this.currentResults as ElectionResults).results
-            .map((result) => result.value)
-            .reduce((a, b) => Math.max(a, b));
+        const allValues = (this.currentResults as ElectionResults).results
+            .map((result) => result.value);
+        return Math.max(...allValues);
     }
 
     get isPreliminary(): boolean {
