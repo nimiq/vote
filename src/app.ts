@@ -224,6 +224,7 @@ export default class App extends Vue {
             value: 1,
             extraData: serialized,
             validityDuration: Math.min(120, config!.end - height),
+            disableDisclaimer: true,
         });
 
         const { sender, value } = signedTransaction.raw;
