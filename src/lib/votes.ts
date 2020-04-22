@@ -97,7 +97,7 @@ export function serializeVote(
 }
 
 export function voteTotalWeight(choices: WeightedChoice[]) {
-    return choices.map((choice) => choice.weight).reduce((previous, current) => previous + current);
+    return choices.reduce((total, choice) => total + choice.weight, 0);
 }
 
 const crypto = window.crypto.subtle || window.crypto;

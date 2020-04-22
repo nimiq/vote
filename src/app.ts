@@ -224,6 +224,7 @@ export default class App extends Vue {
             value: 1,
             extraData: serialized,
             validityDuration: Math.min(120, config!.end - height),
+            disableDisclaimer: true,
         });
 
         const { sender, value } = signedTransaction.raw;
@@ -247,11 +248,11 @@ export default class App extends Vue {
         const client = this.client!;
         const height = await client.getHeadHeight();
         const end = Math.min(config.end, height);
-        const address = await voteAddress(config, false);
+        const votingAddress = await voteAddress(config, false);
         const votes: CastVote<BaseVote>[] = [];
         const addresses: string[] = [];
         const stats: any = {};
-        let log = `Address: ${address}\nStart: ${config.start}\nEnd: ${end}\nCurrent height: ${height}\n\n`;
+        let log = `Address: ${votingAddress}\nStart: ${config.start}\nEnd: ${end}\nCurrent height: ${height}\n\n`;
 
         await Vue.nextTick();
 
@@ -259,7 +260,7 @@ export default class App extends Vue {
         const start = new Date().getTime();
 
         // find all votes
-        (await findTxBetween(address, config.start, end, testnet)).forEach((tx) => {
+        (await findTxBetween(votingAddress, config.start, end, testnet)).forEach((tx) => {
             console.log(JSON.stringify(tx, null, ' '));
             if (addresses.includes(tx.sender)) return; // only last vote countes
             try {
@@ -284,48 +285,92 @@ export default class App extends Vue {
         console.log('counting votes: calculate balance', new Date().getTime() - start, addresses, votes);
 
         // calculate account balance at config.end height and store it in vote.value
+
+        // Request accounts from the network in bulk to not get rate-limited
+        const balancesByAddress = new Map<string, number>();
+        // Collect unique voting addresses
+        for (const vote of votes) {
+            balancesByAddress.set(vote.tx.sender, 0);
+        }
+        // Group addresses into network request groups
+        const allAddresses = [...balancesByAddress.keys()];
+        const addressGroups = [];
+        for (let i = 0; i < allAddresses.length; i += Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT) {
+            addressGroups.push(
+                allAddresses.slice(i, Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT),
+            );
+        }
+
+        // Get balances for address groups in parallel
+        await Promise.all(addressGroups.map(async (group) => {
+            const accounts = await client.getAccounts(group);
+            accounts.forEach((account, i) => {
+                const address = group[i];
+                // NOTE: The balance includes not-yet-vested NIM in vesting contracts
+                balancesByAddress.set(address, account.balance);
+            });
+        }));
+
         for (const vote of votes) {
             const { sender } = vote.tx;
-            vote.value = (await client.getAccount(sender))?.balance;
+            vote.value = balancesByAddress.get(sender)!;
             if (height > config.end) {
+                // After the vote ended, we need to compute what each address's balance was at the end
+                // of the vote. For that, we get the transaction history between now and the end of the
+                // vote, and recreate the balance from that.
                 (await findTxBetween(sender, end, height, testnet)).forEach((tx) => {
+                    // Subtract all NIM that the address received after the vote ended
                     if (tx.recipient === sender) vote.value -= tx.value;
+                    // Add all NIM that the address sent after the vote ended
                     if (tx.sender === sender) vote.value += tx.value + tx.fee;
                 });
             }
         }
 
-        stats.nim = votes.map((v) => v.value).reduce((v1, v2) => v1 + v2, 0);
+        stats.nim = votes.reduce((sum, vote) => sum + vote.value, 0);
+
         const balances = votes.map((vote) => ({ address: vote.tx.sender, balance: vote.value }));
         log += `Balances at the last voting block:\n${JSON.stringify(balances, null, ' ')}\n\n`;
         console.log('counting votes: summarize', new Date().getTime() - start, votes);
 
         // summarize votes
-        const sum = new Map<string, number>(config.choices.map((choice) => [choice.name, 0]));
+        const sums = new Map<string, number>(config.choices.map((choice) => [choice.name, 0]));
         const votesPerChoice = new Map<string, ElectionVote[]>(config.choices.map((choice) => [choice.name, []]));
+
+        // Process each eligible vote
         for (const vote of votes) {
             console.log(vote);
-            const total = voteTotalWeight(vote.vote.choices);
+            const totalWeight = voteTotalWeight(vote.vote.choices);
             for (const choice of vote.vote.choices) {
-                const old = sum.get(choice.name);
-                if (old !== undefined) { // a choice that is not configured
-                    console.log(choice.name, old + (choice.weight / total) * vote.value, choice.weight, vote.value);
-                    const value = (choice.weight / total) * vote.value;
-                    sum.set(choice.name, old + value);
-                    votesPerChoice.get(choice.name)!.push({ sender: vote.tx.sender, height: vote.tx.height, value });
-                }
+                const oldSum = sums.get(choice.name);
+                if (!oldSum) continue; // Invalid choice
+
+                // Calculate the weighted value of this choice
+                const choiceValue = (choice.weight / totalWeight) * vote.value;
+
+                // Add the value to the global sum of this choice
+                const newSum = oldSum + choiceValue;
+                sums.set(choice.name, newSum);
+
+                votesPerChoice.get(choice.name)!.push({
+                    sender: vote.tx.sender,
+                    height: vote.tx.height,
+                    value: choiceValue,
+                });
+
+                console.log(choice.name, newSum, choice.weight, vote.value);
             }
         }
 
-        log += `NIM per choice:\n${JSON.stringify(sum, null, ' ')}\n\n`;
-        console.log('counting votes: return', new Date().getTime() - start, sum, votesPerChoice);
+        log += `NIM per choice:\n${JSON.stringify(sums, null, ' ')}\n\n`;
+        console.log('counting votes: return', new Date().getTime() - start, sums, votesPerChoice);
 
         // format result
         const results = {
             label: config.label || config.name,
             results: config.choices.map((choice) => ({
                 label: choice.label || choice.name,
-                value: sum.get(choice.name)!,
+                value: sums.get(choice.name)!,
                 votes: votesPerChoice.get(choice.name)!,
             })).sort((a, b) => b.value - a.value), // highest first
             stats,
