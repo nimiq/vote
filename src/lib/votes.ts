@@ -6,32 +6,43 @@ import { VoteTypes, BaseVote, SingleChoiceVote, WeightedCoicesVote, MultipleChoi
 export const ELEMENT_SEPARATOR = ' ';
 export const WEIGHT_SEPARATOR = ':';
 
-export function parseVote(message: string, type: VoteTypes.singleChoice): SingleChoiceVote;
-export function parseVote(message: string, type: VoteTypes.multipleChoice): MultipleChoiceVote;
-export function parseVote(message: string, type: VoteTypes.weightedChoices): WeightedCoicesVote;
-export function parseVote(message: string, type: VoteTypes.ranking): RankingVote;
-export function parseVote(message: string, type: string): BaseVote;
+export function parseVote(message: string, config: Config, type: VoteTypes.singleChoice): SingleChoiceVote;
+export function parseVote(message: string, config: Config, type: VoteTypes.multipleChoice): MultipleChoiceVote;
+export function parseVote(message: string, config: Config, type: VoteTypes.weightedChoices): WeightedCoicesVote;
+export function parseVote(message: string, config: Config, type: VoteTypes.ranking): RankingVote;
+export function parseVote<Vote extends BaseVote>(message: string, config: Config): Vote;
 export function parseVote(
     message: string,
-    type: VoteTypes | string,
+    config: Config,
 ): SingleChoiceVote | MultipleChoiceVote | WeightedCoicesVote {
     function invalid(reason: string) {
-        throw new Error(`Invalid vote: "${message}" is not a valid "${type}" vote. Reason: ${reason}.`);
+        throw new Error(`Invalid vote: "${message}" is not a valid "${config.type}" vote. Reason: ${reason}.`);
     }
     if (message.startsWith('Vote')) {
         // Human readable version
         try {
-            // Vote_<Election name as string>_<options>
-            const elements = message.split(ELEMENT_SEPARATOR);
-            elements.shift();
+            // Vote <Election name as string> <options>
+            const elements = message.split(ELEMENT_SEPARATOR).slice(1);
             const name = elements.shift()!;
-            switch (type) {
+            const validChoices = config.choices.map((choice) => choice.name);
+
+            // basic validation
+            if (name != config.name) invalid(`Vote name doesn't match ${config.name}.`);
+            if (elements.length < 1) invalid('At least one choice required.');
+            const allUnique = <T>(list: T[], test = (a: T, b: T) => a === b) =>
+                list.length === unique(list, test).length
+
+            switch (config.type) {
                 case VoteTypes.singleChoice: {
-                    if (elements.length !== 1) invalid('only one answer expected');
+                    if (elements.length !== 1) invalid('Exactly one answer required.');
+                    if (!validChoices.includes(elements[0])) invalid(`Choice should be one of ${validChoices}.`);
                     return { name, choices: [{ name: elements[0], weight: 1 }] };
                 }
                 case VoteTypes.multipleChoice: {
-                    if (elements.length !== unique(elements).length) invalid('choices must be unique');
+                    if (!allUnique(elements)) invalid('Choices must be unique.');
+                    if (elements.some((choice) => validChoices.includes(choice))) {
+                        invalid(`At least one choice from ${validChoices} is required.`);
+                    }
                     return { name, choices: elements.map((choice) => ({ name: choice, weight: 1 })) };
                 }
                 case VoteTypes.weightedChoices: {
@@ -39,20 +50,27 @@ export function parseVote(
                         const [choiceName, weight] = option.split(WEIGHT_SEPARATOR);
                         return { name: choiceName, weight: parseInt(weight, 10) };
                     }));
-                    if (choices.length !== unique(choices, (a, b) => a.name === b.name).length) {
-                        invalid('choices must be unique');
+                    if (!allUnique(choices, (a, b) => a.name === b.name)) invalid('Choices must be unique.');
+                    if (choices.some((choice) => validChoices.includes(choice.name))) {
+                        invalid(`At least one choice from ${validChoices} is required.`);
                     }
                     if (choices.filter((choice) => choice.weight < 0 || choice.weight > 99).length > 0) {
-                        invalid('choice weights must be between 0 and 99 (inclusive).');
+                        invalid('Choice weights must be between 0 and 99 (inclusive).');
                     }
                     return { name, choices };
                 }
                 case VoteTypes.ranking: {
-                    if (elements.length !== unique(elements).length) invalid('choices must be unique');
+                    if (!allUnique(elements)) invalid('Choices must be unique.');
+                    if (elements.length === validChoices.length) {
+                        invalid(`Requires exactly ${validChoices.length} choices.`);
+                    }
+                    if (elements.every((choice) => validChoices.includes(choice))) {
+                        invalid(`Choices must include all ${validChoices}.`);
+                    }
                     const choices = elements.map((choice, pos) => ({ name: choice, weight: elements.length - pos }));
                     return { name, choices };
                 }
-                default: throw new Error(`Vote type "${type}" does not exist`);
+                default: throw new Error(`Vote type "${config.type}" does not exist`);
             }
         } catch (e) {
             throw new Error(`Parsing vote failed. Reason: ${e}`);

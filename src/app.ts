@@ -117,6 +117,7 @@ export default class App extends Vue {
             await this.showFinalResults(latestVoting);
         }
 
+        // essential loading completed, update UI and load Nimiq lib in the background
         console.log('Loading voting app: Parsed config', new Date().getTime() - start, this.choices);
         this.loading = false;
         await Vue.nextTick();
@@ -158,14 +159,19 @@ export default class App extends Vue {
             }
         });
 
+        // loading Nimiq completed, update UI and wait for consensus and load results in background
         console.log('Loading voting app: Loaded Nimiq', new Date().getTime() - start, client);
         await Vue.nextTick();
-
         await client.waitForConsensusEstablished();
-        if (!this.votingConfig && latestVoting && !this.currentResults) { // no voting, no final results > show prelim.
+
+        // no voting, no final results > show preliminary results
+        if (!this.votingConfig && latestVoting && !this.currentResults) {
             this.showPreliminaryResults(latestVoting);
         }
-        if (this.votingConfig && !this.currentResults) await this.showPreliminaryResults();
+        // voting is taking place; loading results in the background so the user doesn't have to wait after voting
+        else if (this.votingConfig && !this.currentResults) {
+            await this.showPreliminaryResults();
+        }
 
         console.log('Loading voting app: Counted votes',
             new Date().getTime() - start,
@@ -215,7 +221,7 @@ export default class App extends Vue {
         const vote: BaseVote = { name: config!.name, choices: this.serializeChoices() };
         const serialized = serializeVote(vote, config!.type);
         console.log('Submitted vote:', serialized);
-        console.log('parsed', parseVote(serialized, config!.type));
+        console.log('parsed', parseVote(serialized, config!));
 
         const signedTransaction = await hub.checkout({
             appName: 'Nimiq Voting App',
@@ -259,24 +265,22 @@ export default class App extends Vue {
         console.log('counting votes: find all votes', config);
         const start = new Date().getTime();
 
-        // find all votes
+        // find all valid votes
         (await findTxBetween(votingAddress, config.start, end, testnet)).forEach((tx) => {
             console.log(JSON.stringify(tx, null, ' '));
             if (addresses.includes(tx.sender)) return; // only last vote countes
             try {
                 // eslint-disable-next-line
                 const { hash, sender, value, data, height } = tx;
-                const vote = parseVote(data, config.type);
-                if (vote.name === config.name) {
-                    votes.push({
-                        vote,
-                        serialized: data,
-                        tx: { hash, sender, value, height },
-                        value: 0, // value of account, to be calculated
-                    });
-                    addresses.push(tx.sender);
-                }
-                console.log('tx', tx, vote);
+                // parse and check vote validity; throws if invalid
+                const vote = parseVote(data, config);
+                votes.push({
+                    vote,
+                    serialized: data,
+                    tx: { hash, sender, value, height },
+                    value: 0, // value of account, to be calculated
+                });
+                addresses.push(tx.sender);
             } catch { /* ignore malformatted votes and other, unrelated TX */ }
         });
 
