@@ -27,6 +27,7 @@
         .nq-card-header
             h1 Hello there!
             p.sub Currently no voting.
+
         .nq-card-body
             p.
                 No voting is taking place at this moment. Follow us on
@@ -97,14 +98,6 @@
                 Your vote was successfully recorded on the blockchain. Find it here:
                 #[a.nq-link(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${vote.tx.hash}`' target='_blank') nimiq.watch]
                 (verification may take 1-3 min.)
-        //- to be re-added later when showing past results
-        //- .nq-card-header(v-else-if='currentResults')
-        //-     h1 Voting results
-        //-     p.sub {{ resultsConfig.label }}
-        //-     Tooltip(:autoWidth='true' preferredPosition='bottom right')
-        //-         InfoCircleSmallIcon(slot='trigger')
-        //-         | In total, {{ currentResults.stats.votes }} votes were casted representing
-        //-         | {{ Math.round(currentResults.stats.nim / 100000) }} NIM.
         .nq-card-header(v-else)
             h1 {{ resultsConfig.label }}
             p.sub Voting results
@@ -127,22 +120,10 @@
                         | {{ result.label}}
                         .note {{ Math.round(result.value / currentResults.stats.nim * 100) }}%
                     .debug(v-if='debug') maxVoteCount {{ maxVoteCount }}, maxValue: {{ maxChoiceValue }}Luna, percentPerLuna {{ percentPerLuna }}%, minSize {{ minBarItemSize }}
-            //- maybe re-added later or replaced - TBD
-            //- p(v-if='isPreliminary')
-            //-     button.nq-button-pill(@click='showPreliminaryVotes()' v-show='height > resultHeight') refresh
-            //- p(v-else-if='votingConfig')
-            //-     button.nq-button-pill(@click='showPreliminaryVotes()') show preliminary results of current voting
+
         .nq-card-footer
             p Bars indicate the weight of a vote.
                 span.preliminary(v-if='isPreliminary') #[br] Results are preliminary.
             .vote-again(v-if='votingConfig')
                 .note You can change your vote by voting again. #[br] The last vote counts.
                 button.vote-again.nq-button-s(@click='vote = null') Vote Again
-
-    //- to be re-added later
-    //- .nq-card(v-if='pastVotings.length > 0')
-    //-     .nq-card-header Past results
-    //-     .nq-card-body
-    //-         .past-voting(v-for='past of pastVotings')
-    //-             a.nq-link(@click='showPastVoting(past)') {{ past.label || past.name }}
-    //-     .nq-card-footer
