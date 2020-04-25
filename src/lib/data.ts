@@ -26,19 +26,19 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
         : dummyResult;
 }
 
-// use this function to validate configuration settings
+// Use this function to validate your voting configuration.
 (window as any).votingAppValidateConfig = function votingAppValidateConfig(config: Config, height: number) {
-    // basics
+    // Basics
     console.assert(config.start < config.end, 'End must be greater than start.');
     console.assert(!!config.name && config.choices.filter((choice) => !!choice.name).length === 0, 'no empty names');
 
-    // choices need to be unique
+    // Choices need to be unique
     console.assert(
         config.choices.length === unique(config.choices.map((choice) => choice.name)).length,
         'Choices must be unique, i.e. names must not be used twice.',
     );
 
-    // no special characters have been used
+    // No special characters have been used
     const names = config.name + config.choices.map((choice) => choice.name).join('');
     console.assert(
         !names.includes(ELEMENT_SEPARATOR) && !names.includes(WEIGHT_SEPARATOR),
@@ -48,14 +48,14 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
         console.warn('Using spaces in names is not recommened.');
     }
 
-    // valid config type
+    // Valid config type
     console.assert(
         Object.values(VoteTypes).includes(config.type),
         `The config type ${config.type} is invalid. Should be one of ${Object.values(VoteTypes)}.
         Use the VoteTypes enum for valid types.`,
     );
 
-    // max serialized vote <= 64 bytes?
+    // Max serialized vote <= 64 bytes?
     const serialized = serializeVote({
         name: config.name,
         choices: config.choices.map((choice) => ({ name: choice.name, weight: 100 })),
@@ -69,6 +69,6 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
         const now = new Date().getTime();
         const start = new Date(now + (config.start - height) * 60000);
         const end = new Date(now + (config.end - height) * 60000);
-        console.log(`The voting will approx. start at ${start} and end at ${end}.`);
+        console.log(`The voting will approximately start at ${start} and end at ${end}.`);
     }
 };
