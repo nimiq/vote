@@ -8,6 +8,11 @@ export type Tx = {
     height: number,
 }
 
+export type Block = {
+    reward: number,
+    fees: number,
+}
+
 export async function fetchJson(url: string, options?: object): Promise<any> {
     return await (await fetch(url, options)).json() as any;
 }
@@ -29,15 +34,33 @@ export async function watchApi(parameters: string, test = false): Promise<any> {
     });
 }
 
-export async function findTxBetween(
-    address: string, minHeight: number, maxHeight: number, test = false,
-): Promise<Tx[]> {
-    const page = 50; // max size of nimiq.watch
-    const voteTxs: Tx[] = [];
+export async function watchApiGetAllUntil(
+    parameters: string,
+    testnet = false,
+    stop = (results: any[], pageSize: number) => results.length < pageSize,
+): Promise<any[]> {
+    const page = 50; // max page size for nimiq.watch API
+    const json: any[] = [];
     for (let skip = 0; ; skip += page) {
-        const txs: any[] = ((await watchApi(`account-transactions/${address}/${page}/${skip}`, test)) as any[])
-            .sort((a, b) => b.block_height - a.block_height); // newest/highest first
-        txs.filter((tx) => tx.block_height >= minHeight && tx.block_height <= maxHeight).forEach((tx) => voteTxs.push({
+        const rows = ((await watchApi(`${parameters}/${page}/${skip}`, testnet)) as any[]);
+        json.push(...rows);
+        if (stop(rows, page)) break;
+    }
+    return json;
+}
+
+export async function findTxBetween(
+    address: string, minHeight: number, maxHeight: number, testnet = false,
+): Promise<Tx[]> {
+    // [{"timestamp":<unix timestamp>,"block_height":0,"hash":"<hex>","sender_address":"<HRA>",
+    //   "receiver_address":"<HRA>","value":<luna>,"fee":<luna>,"data":"<base64 encoded>","confirmations":0}, ...]
+    const txs = await watchApiGetAllUntil(`account-transactions/${address}`, testnet, (results, page) =>
+        results.length < page || Math.min(...results.map((r) => r.block_height)) < minHeight, // done
+    );
+    return txs
+        .sort((a, b) => b.block_height - a.block_height) // newest/highest first
+        .filter((tx) => tx.block_height >= minHeight && tx.block_height <= maxHeight) // in voting period
+        .map((tx) => ({
             hash: tx.hash,
             sender: tx.sender_address,
             recipient: tx.receiver_address,
@@ -46,7 +69,16 @@ export async function findTxBetween(
             data: atob(tx.data),
             height: tx.block_height,
         }));
-        if (txs.length === 0 || txs.length < page || txs[txs.length - 1]?.block_height < minHeight) break; // done
-    }
-    return voteTxs;
+}
+
+export async function blockRewardsSince(address: string, startHeight: number, testnet: boolean): Promise<Block[]> {
+    // {"height":0,"timestamp":<unix timestamp>,"hash":"...","fees":276,"reward":<luna>},
+    return (await watchApiGetAllUntil(`account-blocks/${address}`, testnet, (results, page) =>
+        results.length < page || Math.min(...results.map((r) => r.height)) < startHeight, // done
+    ))
+        .filter((block) => block.height > startHeight)
+        .map((block) => ({
+            reward: block.reward,
+            fees: block.fees,
+        }));
 }
