@@ -1,5 +1,5 @@
 import { unique } from 'typescript-array-utils';
-import { dummies, configAddress, votingLocation } from './const';
+import { dummies, configAddress, resultsLocation } from './const';
 import { fetchJson } from './network';
 import { ElectionResults, Config, VoteTypes } from './types';
 import { dummyConfig, dummyResult } from './dummies';
@@ -22,7 +22,7 @@ export async function loadConfig(): Promise<Array<Config>> {
 
 export async function loadResults(config: Config): Promise<ElectionResults> {
     return !dummies
-        ? fetchJson(`${votingLocation}${await voteAddress(config, false)}.json`)
+        ? fetchJson(`${resultsLocation}${await voteAddress(config, false)}.json`)
         : dummyResult;
 }
 
