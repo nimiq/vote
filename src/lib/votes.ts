@@ -27,10 +27,10 @@ export function parseVote(
             const validChoices = config.choices.map((choice) => choice.name);
 
             // basic validation
-            if (name != config.name) invalid(`Vote name doesn't match ${config.name}.`);
+            if (name !== config.name) invalid(`Vote name doesn't match ${config.name}.`);
             if (elements.length < 1) invalid('At least one choice required.');
             const allUnique = <T>(list: T[], test = (a: T, b: T) => a === b) =>
-                list.length === unique(list, test).length
+                list.length === unique(list, test).length;
 
             switch (config.type) {
                 case VoteTypes.singleChoice: {
