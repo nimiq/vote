@@ -12,7 +12,7 @@ import { loadNimiqCoreOnly, loadNimiqWithCryptography } from './lib/CoreLoader';
 import { serializeVote, parseVote, voteTotalWeight, voteAddress } from './lib/votes';
 import { loadConfig, loadResults } from './lib/data';
 import { findTxBetween, watchApi, blockRewardsSince } from './lib/network';
-import { testnet, debug, dummies } from './lib/const';
+import { testnet, debug, dummies, contactInfo } from './lib/const';
 
 const distinctColors = require('distinct-colors').default;
 
@@ -70,8 +70,13 @@ export default class App extends Vue {
     async created() {
         (window as any).app = this;
         const start = new Date().getTime();
+        const error = (message: string, reason: Error | string, solution: string = contactInfo) => {
+            reason = reason.toString();
+            this.error = { message, reason, solution };
+            throw new Error(`${message}: ${reason}`);
+        };
 
-        // load config and block height
+        // Load config and block height.
         console.log('Loading voting app');
         try {
             this.configs = await loadConfig();
@@ -79,46 +84,48 @@ export default class App extends Vue {
         } catch (e) {
             if (!this.configs || !this.height) {
                 console.log('Loading voting app: Loading configuration failed', this.configs, this.height, e);
-                this.error = {
-                    message: 'Something went wrong loading the configuration files.',
-                    solution: 'Are you offline? Adblocker enabled? Maybe have a look and reload.',
-                    reason: e,
-                };
-                return;
+                error('Something went wrong loading the configuration files.', e,
+                    'Are you offline? Adblocker enabled? Maybe have a look and reload.');
             }
         }
 
         console.log('Loading voting app: Loaded config', new Date().getTime() - start, this.height, this.configs);
 
-        // parse config
+        // Parse config and find current voting.
         const { configs, height, choices } = this;
-        console.log(configs, height);
         const activeConfigs = configs.filter((config) => config.start <= height && config.end > height);
         if (activeConfigs.length > 1) {
-            throw new Error('Voting misconfigurated, more than one voting happing at the same time.');
-        } else if (activeConfigs.length === 1) {
-            [this.votingConfig] = activeConfigs;
-            const { votingConfig: config } = this;
-            if (config.choices) {
-                for (const choice of config.choices) {
-                    choices.push({
-                        label: choice.label || choice.name,
-                        name: choice.name,
-                        weight: config.type === VoteTypes.weightedChoices ? 50 : 1,
-                    });
-                }
-                this.votingAddress = await voteAddress(this.votingConfig, true);
-            } else throw new Error('No choices for this voting found.');
+            error('Voting misconfigured.', 'More than one active voting is not permitted.');
         }
+        if (activeConfigs.length === 1) {
+            const [config] = activeConfigs;
+            if (config.choices.length < 1) {
+                error('Voting misconfigured.', 'No choices configured.');
+            }
+            for (const choice of config.choices) {
+                choices.push({
+                    label: choice.label || choice.name,
+                    name: choice.name,
+                    weight: config.type === VoteTypes.weightedChoices ? 50 : 1,
+                });
+            }
+
+            // config for current voting loaded
+            this.votingConfig = config;
+            this.votingAddress = await voteAddress(this.votingConfig, true);
+        }
+
+        // Find past votings
         this.pastVotings = this.configs
             .filter((config) => config.end <= height)
             .sort((a, b) => b.end - a.end); // latest first
         const [latestVoting] = this.pastVotings;
-        if (!this.votingConfig && latestVoting) { // no voting right now, try loading latest results
+        if (!this.votingConfig && latestVoting) {
+            // No voting right now, try loading latest results
             await this.showFinalResults(latestVoting);
         }
 
-        // essential loading completed, update UI and load Nimiq lib in the background
+        // Essential loading completed, update UI and load Nimiq lib in the background
         console.log('Loading voting app: Parsed config', new Date().getTime() - start, this.choices);
         this.loading = false;
         await Vue.nextTick();
@@ -127,32 +134,26 @@ export default class App extends Vue {
             const Nimiq = await loadNimiqCoreOnly();
             await loadNimiqWithCryptography(!testnet);
 
-            // initialize Nimiq
+            // Initialize Nimiq
             if (!(Nimiq.GenesisConfig as any)._config) {
                 if (testnet) Nimiq.GenesisConfig.test(); else Nimiq.GenesisConfig.main();
             }
             this.client = Nimiq.Client.Configuration.builder().instantiateClient();
         } catch (e) {
-            console.log(e);
-            // if (e.message !== 'GenesisConfig already initialized') {
-            if (!this.configs || !this.client || !this.height) {
-                this.error = {
-                    message: 'Something went wrong loading the Nimiq API.',
-                    solution: 'Are you offline? Adblocker enabled? Maybe have a look and reload.',
-                    reason: e,
-                };
-                // window.document.location.reload();
-                return;
+            if (!this.client) {
+                error('Something went wrong loading the Nimiq API.', e,
+                    'Are you offline? Adblocker enabled? Maybe have a look and reload.');
             }
         }
 
-        const { client } = this;
+        const client = this.client!;
         client.addConsensusChangedListener((state) => {
             this.consensus = state === Nimiq.Client.ConsensusState.ESTABLISHED;
         });
         client.addHeadChangedListener(async () => {
             this.height = await client.getHeadHeight();
             if (this.votingConfig?.end === this.height) {
+                // When the vote has just ended, print the results to console
                 const results = await this.showPreliminaryResults();
                 console.warn(`Voting results for ${this.votingConfig.name}:`);
                 console.log(JSON.stringify(results));
@@ -160,16 +161,16 @@ export default class App extends Vue {
             }
         });
 
-        // loading Nimiq completed, update UI and wait for consensus and load results in background
+        // Loading Nimiq completed, update UI and wait for consensus and load results in background
         console.log('Loading voting app: Loaded Nimiq', new Date().getTime() - start, client);
         await Vue.nextTick();
         await client.waitForConsensusEstablished();
 
-        // no voting and no final results > show preliminary results
+        // No voting and no final results > show preliminary results
         if (!this.votingConfig && latestVoting && !this.currentResults) {
             this.showPreliminaryResults(latestVoting);
         } else if (this.votingConfig && !this.currentResults) {
-            // voting is taking place; loading results in the background so the user doesn't have to wait after voting
+            // Voting is taking place; loading results in the background so the user doesn't have to wait after voting
             await this.showPreliminaryResults();
         }
 
@@ -181,9 +182,8 @@ export default class App extends Vue {
 
     @Watch('currentResults')
     makeColors() {
-        if (!this.currentResults) return; // no results, no colors.
+        if (!this.currentResults) return; // No results, no colors.
         const colors = Math.min(this.currentResults.stats.votes * 2, 100);
-        console.log(`Making ${colors} beautiful colors...`);
         this.colors = distinctColors({
             count: colors,
             lightMin: 65,
@@ -284,7 +284,7 @@ export default class App extends Vue {
             try {
                 // eslint-disable-next-line
                 const { hash, sender, value, data, height } = tx;
-                // parse and check vote validity; throws if invalid
+                // Parse and check vote validity; throws if invalid
                 const vote = parseVote(data, config);
                 votes.push({
                     vote,
@@ -429,7 +429,7 @@ export default class App extends Vue {
         }
     }
 
-    // voting
+    // Voting UI
     get type(): VoteTypes | undefined {
         return this.votingConfig?.type;
     }
@@ -467,7 +467,7 @@ export default class App extends Vue {
         return `count-${choices} ${[2, 4].includes(choices) ? 'two' : 'three'} ${choices > 3 ? 'wrap' : ''} `;
     }
 
-    // results
+    // UI showing results
     readonly minBarItemSize = .375;
     get percentPerLuna(): number {
         return 100 / (this.currentResults as ElectionResults).stats.nim;
@@ -490,7 +490,6 @@ export default class App extends Vue {
     }
 
     get isPreliminary(): boolean {
-        // return this.resultsConfig!.end > this.height;
         return this.currentResults === this.preliminaryResults;
     }
 
