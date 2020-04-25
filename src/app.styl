@@ -193,8 +193,26 @@ p
           // justify-content space-between
           // align-items center
 
-  .note
-    line-height 2.625rem
+  .nq-card-footer
+    position relative
+    .error
+      position absolute
+      top 0
+      right 0
+      bottom 0
+      left 0
+      background white
+      border .25rem solid var(--nimiq-red)
+      border-radius .5rem
+      padding 0 2rem
+      .close
+        position absolute
+        top 1.5rem
+        right 1.5rem
+        cursor pointer
+        opacity .2
+    .note
+      line-height 2.625rem
 
 .results
   .graph

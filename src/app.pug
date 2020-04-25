@@ -81,8 +81,12 @@
 
         .nq-card-footer
             p.rules Vote by sending 0.00001 NIM. #[br] Every NIM in your address at the end of the voting period equals one vote.
-            button.nq-button.light-blue(@click='submitVote' :disabled='!height || !canVote') {{ height ? 'vote' : 'waiting for chain height' }}
+            button.nq-button.light-blue(@click='trySubmittingVote' :disabled='!height || !canVote') {{ height ? 'vote' : 'waiting for chain height' }}
             .note Votes are stored publicly on the blockchain.
+            .error(v-if='errorVoting')
+                h3 Sorry, something went wrong submitting your vote.
+                p {{ errorVoting }}
+                CloseIcon.close(@click='errorVoting = ""')
 
     // results ////////////////////////////////////////////////////////////////
 
