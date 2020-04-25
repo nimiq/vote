@@ -1,7 +1,21 @@
 {
   "votings": [{
-    "start": 923198,
-    "end": 934298,
+    "start": 920884,
+    "end": 955355,
+    "label": "Should the NIM supply growth curve be adjusted?",
+    "name": "change-curve",
+    "type": "singleChoice",
+    "link": "https://www.nimiq.com/blog/nimiq-20-supply-curve-voting/",
+    "choices": [{
+      "name": "yes",
+      "label": "Yes"
+    }, {
+      "name": "no",
+      "label": "No"
+    }]
+  }, {
+    "start": 956755,
+    "end": 963755,
     "label": "What is the optimal supply curve?",
     "name": "pick-curve",
     "type": "ranking",
@@ -18,19 +32,5 @@
       "name": "none",
       "label": "None of the choices"
     }]
-  }, {
-    "start": 100,
-    "end": 1000,
-    "label": "Test",
-    "name": "test",
-    "type": "singleChoice",
-    "choices": [{
-      "name": "vanilla",
-      "label": "Vanilla"
-    }, {
-      "name": "chocolate",
-      "label": "Chocolate"
-    }],
-    "results": "chocolate-vs-vanilla-2018"
   }]
 }
