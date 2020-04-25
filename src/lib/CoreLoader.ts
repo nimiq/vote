@@ -30,7 +30,6 @@ export async function loadNimiqCoreOnly(): Promise<Nimiq> {
         const url = `${coreBasePath}${coreVariant}.js`;
         $script.type = 'text/javascript';
         $script.onload = () => {
-            $script.parentNode!.removeChild($script);
             resolve();
         };
         $script.onerror = () => {
