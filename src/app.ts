@@ -4,14 +4,14 @@ import { Component, Vue, Watch } from 'vue-property-decorator';
 import HubApi from '@nimiq/hub-api';
 import stringHash from 'string-hash';
 import draggable from 'vuedraggable';
-import { Tooltip, InfoCircleSmallIcon } from '@nimiq/vue-components';
+import { Tooltip, InfoCircleSmallIcon, CloseIcon } from '@nimiq/vue-components';
 
 import { BaseVote, VoteTypes, BaseChoice, Config, Option, ElectionResults, CastVote, ElectionVote }
     from './lib/types';
 import { loadNimiqCoreOnly, loadNimiqWithCryptography } from './lib/CoreLoader';
 import { serializeVote, parseVote, voteTotalWeight, voteAddress } from './lib/votes';
 import { loadConfig, loadResults } from './lib/data';
-import { findTxBetween, watchApi } from './lib/network';
+import { findTxBetween, watchApi, blockRewardsSince } from './lib/network';
 import { testnet, debug, dummies } from './lib/const';
 
 const distinctColors = require('distinct-colors').default;
@@ -34,7 +34,7 @@ type Error = {
 
 const appLogo = `${window.location.origin}/android-icon-192x192.png`;
 
-@Component({ components: { draggable, Tooltip, InfoCircleSmallIcon } })
+@Component({ components: { draggable, Tooltip, InfoCircleSmallIcon, CloseIcon } })
 export default class App extends Vue {
     loading = true;
     testnet = testnet;
@@ -49,6 +49,7 @@ export default class App extends Vue {
     // vote: Receipt | null = localStorage.vote ? JSON.parse(localStorage.vote) : null;
     vote: CastVote | null = localStorage.vote ? JSON.parse(localStorage.vote) : null;
     newlyVoted = false;
+    errorVoting = '';
 
     choices: Option[] = [];
     singleChoice: string = '';
@@ -164,12 +165,11 @@ export default class App extends Vue {
         await Vue.nextTick();
         await client.waitForConsensusEstablished();
 
-        // no voting, no final results > show preliminary results
+        // no voting and no final results > show preliminary results
         if (!this.votingConfig && latestVoting && !this.currentResults) {
             this.showPreliminaryResults(latestVoting);
-        }
-        // voting is taking place; loading results in the background so the user doesn't have to wait after voting
-        else if (this.votingConfig && !this.currentResults) {
+        } else if (this.votingConfig && !this.currentResults) {
+            // voting is taking place; loading results in the background so the user doesn't have to wait after voting
             await this.showPreliminaryResults();
         }
 
@@ -216,6 +216,14 @@ export default class App extends Vue {
         }
     }
 
+    async trySubmittingVote() {
+        try {
+            this.submitVote();
+        } catch (error) {
+            this.errorVoting = error.message;
+        }
+    }
+
     async submitVote() {
         const { votingConfig: config, hub, height, votingAddress } = this;
         const vote: BaseVote = { name: config!.name, choices: this.serializeChoices() };
@@ -232,6 +240,10 @@ export default class App extends Vue {
             validityDuration: Math.min(120, config!.end - height),
             disableDisclaimer: true,
         });
+
+        if (signedTransaction.raw.senderType === Nimiq.Account.Type.BASIC) {
+            throw new Error('You can only vote with basic accounts. Vesting and HTLC contracts are not allowed.');
+        }
 
         const { sender, value } = signedTransaction.raw;
         this.vote = {
@@ -255,9 +267,9 @@ export default class App extends Vue {
         const height = await client.getHeadHeight();
         const end = Math.min(config.end, height);
         const votingAddress = await voteAddress(config, false);
-        const votes: CastVote<BaseVote>[] = [];
         const addresses: string[] = [];
         const stats: any = {};
+        let votes: CastVote<BaseVote>[] = [];
         let log = `Address: ${votingAddress}\nStart: ${config.start}\nEnd: ${end}\nCurrent height: ${height}\n\n`;
 
         await Vue.nextTick();
@@ -265,7 +277,7 @@ export default class App extends Vue {
         console.log('counting votes: find all votes', config);
         const start = new Date().getTime();
 
-        // find all valid votes
+        // Get all valid votes
         (await findTxBetween(votingAddress, config.start, end, testnet)).forEach((tx) => {
             console.log(JSON.stringify(tx, null, ' '));
             if (addresses.includes(tx.sender)) return; // only last vote countes
@@ -284,49 +296,55 @@ export default class App extends Vue {
             } catch { /* ignore malformatted votes and other, unrelated TX */ }
         });
 
+        // Get balances and types of all accounts that voted, use chunking to avoid rate-limit
+        const addressChunk = [];
+        for (let i = 0; i < addresses.length; i += Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT) {
+            addressChunk.push(
+                addresses.slice(i, Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT),
+            );
+        }
+
+        // Get accounts details in parallel for all chunks
+        const balancesByAddress = new Map<string, number>();
+        await Promise.all(addressChunk.map(async (chunk) => {
+            const accounts = await client.getAccounts(chunk);
+            accounts.forEach((account, i) => {
+                const address = chunk[i];
+                // Only keep BASIC accounts
+                if (account.type === Nimiq.Account.Type.BASIC) {
+                    balancesByAddress.set(address, account.balance);
+                } else {
+                    balancesByAddress.delete(address);
+                }
+            });
+        }));
+
+        // Remove votes from non-basic accounts, it's not allowed to vote with vesting or HTLC contracts
+        votes = votes.filter((vote) => !balancesByAddress.has(vote.tx.sender));
+
         stats.votes = votes.length;
         log += `Counted votes:\n${JSON.stringify(votes, null, ' ')}\n\n`;
         console.log('counting votes: calculate balance', new Date().getTime() - start, addresses, votes);
 
-        // calculate account balance at config.end height and store it in vote.value
-
-        // Request accounts from the network in bulk to not get rate-limited
-        const balancesByAddress = new Map<string, number>();
-        // Collect unique voting addresses
-        for (const vote of votes) {
-            balancesByAddress.set(vote.tx.sender, 0);
-        }
-        // Group addresses into network request groups
-        const allAddresses = [...balancesByAddress.keys()];
-        const addressGroups = [];
-        for (let i = 0; i < allAddresses.length; i += Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT) {
-            addressGroups.push(
-                allAddresses.slice(i, Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT),
-            );
-        }
-
-        // Get balances for address groups in parallel
-        await Promise.all(addressGroups.map(async (group) => {
-            const accounts = await client.getAccounts(group);
-            accounts.forEach((account, i) => {
-                const address = group[i];
-                // NOTE: The balance includes not-yet-vested NIM in vesting contracts
-                balancesByAddress.set(address, account.balance);
-            });
-        }));
-
+        // Assign balances to votes
         for (const vote of votes) {
             const { sender } = vote.tx;
             vote.value = balancesByAddress.get(sender)!;
             if (height > config.end) {
-                // After the vote ended, we need to compute what each address's balance was at the end
-                // of the vote. For that, we get the transaction history between now and the end of the
-                // vote, and recreate the balance from that.
+                // After the vote ended, a balance can change. Therefore, we compute the balance of each address
+                // at the end of the vote by tanking transactions and block rewards since then into account.
+
+                // Get all transaction since the end of the vote, substract incoming and add outgoing
                 (await findTxBetween(sender, end, height, testnet)).forEach((tx) => {
                     // Subtract all NIM that the address received after the vote ended
                     if (tx.recipient === sender) vote.value -= tx.value;
                     // Add all NIM that the address sent after the vote ended
                     if (tx.sender === sender) vote.value += tx.value + tx.fee;
+                });
+
+                // substract any NIM that were mined in the meantime
+                (await blockRewardsSince(sender, end, testnet)).forEach((block) => {
+                    vote.value -= block.reward + block.fees;
                 });
             }
         }
@@ -337,23 +355,20 @@ export default class App extends Vue {
         log += `Balances at the last voting block:\n${JSON.stringify(balances, null, ' ')}\n\n`;
         console.log('counting votes: summarize', new Date().getTime() - start, votes);
 
-        // summarize votes
+        // Summarize votes
         const sums = new Map<string, number>(config.choices.map((choice) => [choice.name, 0]));
         const votesPerChoice = new Map<string, ElectionVote[]>(config.choices.map((choice) => [choice.name, []]));
-
-        // Process each eligible vote
         for (const vote of votes) {
-            console.log(vote);
             const totalWeight = voteTotalWeight(vote.vote.choices);
             for (const choice of vote.vote.choices) {
-                const oldSum = sums.get(choice.name);
-                if (!oldSum) continue; // Invalid choice
+                if (!sums.has(choice.name)) continue; // Invalid choice
 
                 // Calculate the weighted value of this choice
                 const choiceValue = (choice.weight / totalWeight) * vote.value;
 
                 // Add the value to the global sum of this choice
-                const newSum = oldSum + choiceValue;
+                const oldSum = sums.get(choice.name);
+                const newSum = oldSum! + choiceValue;
                 sums.set(choice.name, newSum);
 
                 votesPerChoice.get(choice.name)!.push({
@@ -361,15 +376,13 @@ export default class App extends Vue {
                     height: vote.tx.height,
                     value: choiceValue,
                 });
-
-                console.log(choice.name, newSum, choice.weight, vote.value);
             }
         }
 
         log += `NIM per choice:\n${JSON.stringify(sums, null, ' ')}\n\n`;
         console.log('counting votes: return', new Date().getTime() - start, sums, votesPerChoice);
 
-        // format result
+        // Format results
         const results = {
             label: config.label || config.name,
             results: config.choices.map((choice) => ({
