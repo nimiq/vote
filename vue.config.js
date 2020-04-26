@@ -27,7 +27,7 @@ const chainWebpack = (config) => {
 };
 
 module.exports = {
-    publicPath: '/vote/',
+    // publicPath: '/vote/',
     configureWebpack,
     chainWebpack,
 };

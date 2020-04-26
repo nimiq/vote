@@ -1,5 +1,5 @@
 export const production = false;
-const specialConfig = '';
+const specialConfig = 'https://nimiq.community/voting.test.json';
 const useDummies = false;
 const showDebugging = false;
 
