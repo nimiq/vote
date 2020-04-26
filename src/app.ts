@@ -6,7 +6,7 @@ import stringHash from 'string-hash';
 import draggable from 'vuedraggable';
 import { Tooltip, InfoCircleSmallIcon, CloseIcon } from '@nimiq/vue-components';
 
-import { BaseVote, VoteTypes, BaseChoice, Config, Option, ElectionResults, CastVote, ElectionVote }
+import { BaseVote, VoteTypes, BaseChoice, Config, Option, ElectionResults, CastVote, ElectionVote, ElectionStats }
     from './lib/types';
 import { loadNimiqCoreOnly, loadNimiqWithCryptography } from './lib/CoreLoader';
 import { serializeVote, parseVote, voteTotalWeight, voteAddress } from './lib/votes';
@@ -232,7 +232,7 @@ export default class App extends Vue {
         console.log('parsed', parseVote(serialized, config!));
 
         const signedTransaction = await hub.checkout({
-            appName: 'Nimiq Voting App',
+            appName: 'Nimiq Vote',
             shopLogoUrl: appLogo,
             recipient: votingAddress!,
             value: 1,
@@ -241,7 +241,7 @@ export default class App extends Vue {
             disableDisclaimer: true,
         });
 
-        if (signedTransaction.raw.senderType === Nimiq.Account.Type.BASIC) {
+        if (signedTransaction.raw.senderType !== Nimiq.Account.Type.BASIC) {
             throw new Error('You can only vote with basic accounts. Vesting and HTLC contracts are not allowed.');
         }
 
@@ -267,8 +267,7 @@ export default class App extends Vue {
         const height = await client.getHeadHeight();
         const end = Math.min(config.end, height);
         const votingAddress = await voteAddress(config, false);
-        const addresses: string[] = [];
-        const stats: any = {};
+        const stats: ElectionStats = { votes: 0, luna: 0 };
         let votes: CastVote<BaseVote>[] = [];
         let log = `Address: ${votingAddress}\nStart: ${config.start}\nEnd: ${end}\nCurrent height: ${height}\n\n`;
 
@@ -278,6 +277,7 @@ export default class App extends Vue {
         const start = new Date().getTime();
 
         // Get all valid votes
+        const addresses: string[] = [];
         (await findTxBetween(votingAddress, config.start, end, testnet)).forEach((tx) => {
             console.log(JSON.stringify(tx, null, ' '));
             if (addresses.includes(tx.sender)) return; // only last vote countes
@@ -320,7 +320,7 @@ export default class App extends Vue {
         }));
 
         // Remove votes from non-basic accounts, it's not allowed to vote with vesting or HTLC contracts
-        votes = votes.filter((vote) => !balancesByAddress.has(vote.tx.sender));
+        votes = votes.filter((vote) => balancesByAddress.has(vote.tx.sender));
 
         stats.votes = votes.length;
         log += `Counted votes:\n${JSON.stringify(votes, null, ' ')}\n\n`;
@@ -349,7 +349,7 @@ export default class App extends Vue {
             }
         }
 
-        stats.nim = votes.reduce((sum, vote) => sum + vote.value, 0);
+        stats.luna = votes.reduce((sum, vote) => sum + vote.value, 0);
 
         const balances = votes.map((vote) => ({ address: vote.tx.sender, balance: vote.value }));
         log += `Balances at the last voting block:\n${JSON.stringify(balances, null, ' ')}\n\n`;
@@ -361,7 +361,10 @@ export default class App extends Vue {
         for (const vote of votes) {
             const totalWeight = voteTotalWeight(vote.vote.choices);
             for (const choice of vote.vote.choices) {
-                if (!sums.has(choice.name)) continue; // Invalid choice
+                if (!sums.has(choice.name)) {
+                    console.error('Invalid choice', vote, choice);
+                    continue; // Invalid choice, should not happen, means malformatted vote was parsed w/t error
+                }
 
                 // Calculate the weighted value of this choice
                 const choiceValue = (choice.weight / totalWeight) * vote.value;
@@ -470,7 +473,7 @@ export default class App extends Vue {
     // UI showing results
     readonly minBarItemSize = .375;
     get percentPerLuna(): number {
-        return 100 / (this.currentResults as ElectionResults).stats.nim;
+        return 100 / (this.currentResults as ElectionResults).stats.luna;
     }
 
     get barSizePerLuna(): number {

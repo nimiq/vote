@@ -89,11 +89,13 @@ export type ElectionResult = {
     votes: ElectionVote[],
 }
 
+export type ElectionStats = {
+    votes: number,
+    luna: number,
+}
+
 export type ElectionResults = {
     label: string,
     results: ElectionResult[],
-    stats: {
-        votes: number,
-        nim: number,
-    },
+    stats: ElectionStats,
 }
