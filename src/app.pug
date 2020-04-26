@@ -112,18 +112,18 @@
                 .result(v-for='result of currentResults.results')
                     .votes
                         .vote.space(:style='`flex-grow: ${(maxChoiceValue - result.value) * barSizePerLuna}`')
-                        .vote(v-for='vote of result.votes'
+                        .vote(v-for='vote of result.votes' v-if='vote.value * percentPerLuna > 0.1'
                             :class='{mini: barSizePerLuna * vote.value < minBarItemSize}'
                             :title='`${vote.sender} - ${Math.round(vote.value / 100000)}NIM - ${(vote.value * percentPerLuna).toFixed(2)}%`'
                             :style='`background: ${color(vote.sender)}; flex-grow: ${vote.value * barSizePerLuna};`')
                     .label
                         | {{ result.label}}
-                        .note {{ Math.round(result.value / currentResults.stats.nim * 100) }}%
+                        .note {{ Math.round(result.value / currentResults.stats.luna * 100) }}%
                     .debug(v-if='debug') maxVoteCount {{ maxVoteCount }}, maxValue: {{ maxChoiceValue }}Luna, percentPerLuna {{ percentPerLuna }}%, minSize {{ minBarItemSize }}
 
         .nq-card-footer
-            p Bars indicate the weight of a vote.
-                span.preliminary(v-if='isPreliminary') #[br] Results are preliminary.
+            p Bars indicate the weight of a vote. #[br] Votes below 0.1% are hidden.
+                template(v-if='isPreliminary') #[br] Results are preliminary.
             .vote-again(v-if='votingConfig')
                 .note You can change your vote by voting again. #[br] The last vote counts.
                 button.vote-again.nq-button-s(@click='vote = null') Vote Again
