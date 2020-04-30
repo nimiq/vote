@@ -12,7 +12,12 @@
     <link rel="icon" type="image/png" sizes="32x32" href="<%= BASE_URL %>favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="<%= BASE_URL %>favicon-16x16.png">
     <title>Nimiq Vote</title>
-    <!-- Important: browser warning script needs to be included before all other scripts. -->
+    <script>
+        Object.defineProperty(window, 'Uint8Array', {
+            writable: false,
+            configurable: false,
+        });
+    </script>
     <script type="text/javascript" src="<%= BASE_URL %>browser-warning.js"></script>
 </head>
 <body class="nimiq-style">
@@ -22,23 +27,11 @@
         <span class="logo-subtitle">Vote</span>
     </header>
     <div id="app">
-        <!-- Inject browser warnings. To hide content of your page in case a browser warning is displayed, you can add
-        the hide-on-browser-warning class to the elements to be hidden. -->
         <%= htmlWebpackPlugin.options.BROWSER_WARNING %>
     </div>
     <footer>
         <a href="https://www.nimiq.com/" target="_blank">Powered by Nimiq</a>
     </footer>
     <!-- built files will be auto injected -->
-
-    <!-- If you are sure that you will need the Nimiq core soon after page load you can enable these lines to preload it
-    with higher priority and disable the lower priority prefetching in CoreLoader. Use 'web' or 'web-offline' according
-    to coreVariant in CoreLoader.ts -->
-    <!--<link rel="preload" as="script"
-        href="https://cdn.nimiq.com/v<%= htmlWebpackPlugin.options.CORE_VERSION %>/web.js">
-    <link rel="preload" as="script"
-        href="https://cdn.nimiq.com/v<%= htmlWebpackPlugin.options.CORE_VERSION %>/worker-wasm.js">
-    <link rel="preload" as="fetch" crossorigin
-        href="https://cdn.nimiq.com/v<%= htmlWebpackPlugin.options.CORE_VERSION %>/worker-wasm.wasm">-->
 </body>
 </html>
