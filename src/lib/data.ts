@@ -1,9 +1,9 @@
-import { unique } from 'typescript-array-utils';
 import { dummies, configAddress, resultsLocation } from './const';
 import { fetchJson } from './network';
 import { ElectionResults, Config, VoteTypes } from './types';
 import { dummyConfig, dummyResult } from './dummies';
 import { voteAddress, ELEMENT_SEPARATOR, WEIGHT_SEPARATOR, serializeVote } from './votes';
+import { allUnique } from './util';
 
 async function _load(url: string): Promise<Array<Config>> {
     try {
@@ -27,14 +27,14 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
 }
 
 // Use this function to validate your voting configuration.
-(window as any).votingAppValidateConfig = function votingAppValidateConfig(config: Config, height: number) {
+(window as any).validateVotingConfig = function validateVotingConfig(config: Config, height: number) {
     // Basics
     console.assert(config.start < config.end, 'End must be greater than start.');
     console.assert(!!config.name && config.choices.filter((choice) => !!choice.name).length === 0, 'no empty names');
 
     // Choices need to be unique
     console.assert(
-        config.choices.length === unique(config.choices.map((choice) => choice.name)).length,
+        allUnique(config.choices.map((choice) => choice.name)),
         'Choices must be unique, i.e. names must not be used twice.',
     );
 
@@ -71,4 +71,14 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
         const end = new Date(now + (config.end - height) * 60000);
         console.log(`The voting will approximately start at ${start} and end at ${end}.`);
     }
+};
+
+// Use this function to validate your voting configuration.
+(window as any).expectedBlockHeight = function expectedBlockHeight(date: Date | string, currentHeight: number) {
+    const now = new Date().getTime();
+    const expectedTime = typeof date === 'string' ? Date.parse(date) : date.getTime();
+    const deltaBlocks = Math.floor((expectedTime - now) / 60000);
+    console.log(expectedTime, deltaBlocks);
+    console.log(`At ${date}, Nimiq should be at block height ${currentHeight + deltaBlocks}.
+    That's ${deltaBlocks} blocks from ${currentHeight}.`);
 };

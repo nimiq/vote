@@ -20,7 +20,6 @@
     "core-js": "^3.6.4",
     "distinct-colors": "^2.1.0",
     "string-hash": "^1.1.3",
-    "typescript-array-utils": "^0.1.4",
     "vue": "^2.6.11",
     "vue-class-component": "^7.2.2",
     "vue-property-decorator": "^8.3.0",
@@ -43,12 +42,12 @@
     "eslint-plugin-import": "^2.20.1",
     "eslint-plugin-vue": "^6.1.2",
     "node-sass": "^4.12.0",
-    "sass-loader": "^8.0.2",
-    "typescript": "~3.7.5",
     "pug": "^2.0.4",
     "pug-plain-loader": "^1.0.0",
+    "sass-loader": "^8.0.2",
     "stylus": "^0.54.7",
     "stylus-loader": "^3.0.2",
+    "typescript": "~3.7.5",
     "vue-template-compiler": "^2.6.11"
   }
 }

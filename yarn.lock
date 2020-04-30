@@ -10448,11 +10448,6 @@ typedarray@^0.0.6:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
 
-typescript-array-utils@^0.1.4:
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/typescript-array-utils/-/typescript-array-utils-0.1.4.tgz#9bb29e5a0a396e50bba10532b2828cc0290b9610"
-  integrity sha512-z2QuI8HuTBW4ClrfbMzarOFAUJUoTlkWx9jAZ51BNHg1wY+hqjxY62Q63wAOcvNAfegVpXH0EWOMGO2Q/o9CCA==
-
 typescript@~3.7.5:
   version "3.7.5"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.5.tgz#0692e21f65fd4108b9330238aac11dd2e177a1ae"

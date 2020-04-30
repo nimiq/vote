@@ -1,5 +1,5 @@
-import { unique } from 'typescript-array-utils';
 import { toBase32, ibanCheck, CCODE } from './core';
+import { allUnique } from './util';
 import { VoteTypes, BaseVote, SingleChoiceVote, WeightedCoicesVote, MultipleChoiceVote, RankingVote, WeightedChoice,
     Config } from './types';
 
@@ -29,8 +29,6 @@ export function parseVote(
             // basic validation
             if (name !== config.name) invalid(`Vote name doesn't match ${config.name}.`);
             if (elements.length < 1) invalid('At least one choice required.');
-            const allUnique = <T>(list: T[], test = (a: T, b: T) => a === b) =>
-                list.length === unique(list, test).length;
 
             switch (config.type) {
                 case VoteTypes.singleChoice: {
