@@ -1,7 +1,7 @@
 {
   "votings": [{
-    "start": 920884,
-    "end": 955355,
+    "start": 955584,
+    "end": 964744,
     "label": "Should the NIM supply growth curve be adjusted?",
     "name": "change-curve",
     "type": "singleChoice",
