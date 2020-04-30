@@ -33,7 +33,7 @@
                 No voting is taking place at this moment. Follow us on
                 #[a(href='https://twitter.com/nimiq') Twitter]
                 or join us on
-                #[a(href='https://t.me/joinchat/AAAAAEJW-ozFwo7Er9jpHw') Telegam]
+                #[a(href='https://t.me/joinchat/AAAAAEJW-ozFwo7Er9jpHw') Telegram]
                 and
                 #[a(href='https://www.nimiq.com/community/') many more social channels]
                 to stay up-to-date. Looking forward to chat with you!
@@ -96,8 +96,8 @@
             h1 Thank you for voting!
             p.sub.
                 Your vote was successfully recorded on the blockchain. Find it here:
-                #[a.nq-link(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${vote.tx.hash}`' target='_blank') nimiq.watch]
-                (verification may take 1-3 min.)
+                #[a.nq-link(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${vote.tx.hash}`' target='_blank') nimiq.watch].
+            .note Verification may take 1-3 min.
         .nq-card-header(v-else)
             h1 {{ resultsConfig.label }}
             p.sub Voting results
@@ -122,8 +122,9 @@
                     .debug(v-if='debug') maxVoteCount {{ maxVoteCount }}, maxValue: {{ maxChoiceValue }}Luna, percentPerLuna {{ percentPerLuna }}%, minSize {{ minBarItemSize }}
 
         .nq-card-footer
-            p Bars indicate the weight of a vote. #[br] Votes below 0.1% are hidden.
-                template(v-if='isPreliminary') #[br] Results are preliminary.
+            p Bars indicate the weight of a vote. #[br]
+                template(v-if='isPreliminary') Results are preliminary. #[br]
+                span.note Votes below 0.1% are hidden.
             .vote-again(v-if='votingConfig')
                 .note You can change your vote by voting again. #[br] The last vote counts.
                 button.vote-again.nq-button-s(@click='vote = null') Vote Again
