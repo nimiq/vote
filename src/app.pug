@@ -126,5 +126,5 @@
                 template(v-if='isPreliminary') Results are preliminary. #[br]
                 span.note Votes below 0.1% are hidden.
             .vote-again(v-if='votingConfig')
-                .note You can change your vote by voting again. #[br] The last vote counts.
+                .note You can change your vote by voting again. #[br] The last vote per address counts.
                 button.vote-again.nq-button-s(@click='vote = null') Vote Again
