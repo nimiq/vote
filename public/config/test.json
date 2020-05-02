@@ -14,8 +14,8 @@
       "label": "No"
     }]
   }, {
-    "start": 956755,
-    "end": 963755,
+    "start": 975789,
+    "end": 982988,
     "label": "What is the optimal supply curve?",
     "name": "pick-curve",
     "type": "ranking",
