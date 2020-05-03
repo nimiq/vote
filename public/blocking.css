@@ -30,6 +30,22 @@ body > footer {
     flex-shrink: 0;
 }
 
+#testnet-warning {
+    margin: 0 -2rem;
+    padding: 2rem;
+    text-align: center;
+    color: var(--nimiq-blue);
+}
+
+#testnet-warning .close {
+    float: right;
+    width: 3rem;
+    height: 3rem;
+    margin-left: 1rem;
+    cursor: pointer;
+    background: url('data:image/svg+xml,<svg width="15" height="15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 13L13 2M2 2l11 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>') center no-repeat;
+}
+
 .logo {
     --signet-width: 3.5rem;
     height: var(--signet-width);

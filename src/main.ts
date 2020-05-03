@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import App from './App.vue';
+import { testnet } from './lib/const';
 
 // On browser warning stop further execution.
 if (window.hasBrowserWarning) {
@@ -11,6 +12,16 @@ if (window.hasBrowserWarning) {
 window.NIMIQ_IQONS_SVG_PATH = `${process.env.BASE_URL}img/iqons.min.svg`;
 
 Vue.config.productionTip = false;
+
+// Display testnet warning
+const $testnetWarning = document.getElementById('testnet-warning')!;
+if (testnet) {
+    $testnetWarning.style.display = 'block';
+    const $closeButton = $testnetWarning.querySelector('.close')!;
+    $closeButton.addEventListener('click', () => $testnetWarning.remove());
+} else {
+    $testnetWarning.remove();
+}
 
 new Vue({
     render: (h) => h(App),
