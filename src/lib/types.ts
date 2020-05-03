@@ -58,6 +58,8 @@ export type Config = {
     label: string, // short description of the purpose of the voting
     choices: Choice[],
     link?: string, // to additional info and instructions
+    announcement?: string, // additional info to be shown before voting goes live
+    announcementLink?: string, // additional link for announcement, otherwise normal link
 }
 
 // App
