@@ -1,4 +1,4 @@
-export const production = false;
+export const production = true;
 const specialConfig = '';
 const useDummies = false;
 const showDebugging = false;

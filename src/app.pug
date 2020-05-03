@@ -29,7 +29,11 @@
             p.sub Currently no voting.
 
         .nq-card-body
-            p.
+            template(v-if="nextVoting")
+                p(v-if="nextVoting.announcement") {{ nextVoting.announcement }}
+                p(v-if="nextVoting.link || nextVoting.announcementLink")
+                    a.nq-link(:href="`${nextVoting.announcementLink || nextVoting.link}`" target='_blank') Click here for more info.
+            p(v-else).
                 No voting is taking place at this moment. Follow us on
                 #[a(href='https://twitter.com/nimiq') Twitter]
                 or join us on
@@ -95,9 +99,9 @@
         .nq-card-header(v-if='voted')
             h1 Thank you for voting!
             p.sub.
-                Your vote was successfully recorded on the blockchain. Find it here:
+                Your vote was submitted to the blockchain. #[br] Find it here:
                 #[a.nq-link(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${vote.tx.hash}`' target='_blank') nimiq.watch].
-            .note Verification may take 1-3 min.
+            .note Verification may take a few minutes. #[a.nq-link(href="javascript:location.reload()") Refresh.]
         .nq-card-header(v-else)
             h1 {{ resultsConfig.label }}
             p.sub Voting results

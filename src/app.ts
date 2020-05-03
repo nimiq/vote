@@ -60,6 +60,8 @@ export default class App extends Vue {
     height = 0;
 
     pastVotings: Array<Config> = [];
+    upcomingVotings: Array<Config> = [];
+    nextVoting: Config | null = null;
 
     resultHeight: number = 0;
     resultsConfig: Config | null = null; // current results showing
@@ -70,6 +72,7 @@ export default class App extends Vue {
     async created() {
         (window as any).app = this;
         const start = new Date().getTime();
+        const configName = window.location.hash.replace('#', '');
         const error = (message: string, reason: Error | string, solution: string = contactInfo) => {
             reason = reason.toString();
             this.error = { message, reason, solution };
@@ -93,7 +96,10 @@ export default class App extends Vue {
 
         // Parse config and find current voting.
         const { configs, height, choices } = this;
-        const activeConfigs = configs.filter((config) => config.start <= height && config.end > height);
+        const activeConfigs = configName
+            ? configs.filter((config) => config.start <= height && config.name === configName)
+            : configs.filter((config) => config.start <= height && config.end > height);
+
         if (activeConfigs.length > 1) {
             error('Voting misconfigured.', 'More than one active voting is not permitted.');
         }
@@ -124,6 +130,13 @@ export default class App extends Vue {
             // No voting right now, try loading latest results
             await this.showFinalResults(latestVoting);
         }
+
+        // Find upcoming votings
+        this.upcomingVotings = this.configs
+            .filter((config) => config.start > height)
+            .sort((a, b) => a.start - b.start); // closest first
+        [this.nextVoting] = this.upcomingVotings;
+
 
         // Essential loading completed, update UI and load Nimiq lib in the background
         console.log('Loading voting app: Parsed config', new Date().getTime() - start, this.choices);
