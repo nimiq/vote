@@ -30,7 +30,7 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
 (window as any).validateVotingConfig = function validateVotingConfig(config: Config, height: number) {
     // Basics
     console.assert(config.start < config.end, 'End must be greater than start.');
-    console.assert(!!config.name && config.choices.filter((choice) => !!choice.name).length === 0, 'no empty names');
+    console.assert(!!config.name && config.choices.filter((choice) => !choice.name).length === 0, 'no empty names');
 
     // Choices need to be unique
     console.assert(
@@ -64,6 +64,8 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
         serialized.length <= 64,
         `Names are too long. Votes for this config might be up to ${serialized.length} bytes, maximum is 64 bytes.`,
     );
+
+    console.log('All good!');
 
     if (height) {
         const now = new Date().getTime();
