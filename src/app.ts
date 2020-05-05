@@ -96,10 +96,10 @@ export default class App extends Vue {
         console.log('Loading voting app: Loaded config', new Date().getTime() - start, this.height, this.configs);
 
         // Parse config and find current voting.
-        const { configs, height, choices } = this;
-        const activeConfigs = configName
-            ? configs.filter((config) => config.start <= height && config.name === configName)
-            : configs.filter((config) => config.start <= height && config.end > height);
+        // If name is given, only consider the config with that name
+        const { height, choices } = this;
+        const configs = configName ? this.configs.filter((config) => config.name === configName) : this.configs;
+        const activeConfigs = configs.filter((config) => config.start <= height && config.end > height);
 
         if (activeConfigs.length > 1) {
             error('Voting misconfigured.', 'More than one active voting is not permitted.');
@@ -283,7 +283,7 @@ export default class App extends Vue {
         const votingAddress = await voteAddress(config, false);
         const stats: ElectionStats = { votes: 0, luna: 0 };
         let votes: CastVote<BaseVote>[] = [];
-        let log = `Address: ${votingAddress}\nStart: ${config.start}\nEnd: ${end}\nCurrent height: ${height}\n\n`;
+        let log = `Address: ${votingAddress}\nStart: ${config.start}\nEnd: ${config.end}\nHeight: ${height}\n\n`;
 
         await Vue.nextTick();
 
@@ -507,9 +507,10 @@ export default class App extends Vue {
     }
 
     topVotes(result: ElectionResult): ElectionVote[] {
+        // TODO cache results, ideally use a getting so Vue caches automatically
         return result.votes.slice()
             .sort((a, b) => b.value - a.value) // highest value first
-            .slice(0, maxVotesInGraph)
+            .slice(0, maxVotesInGraph) // top x votes
             .sort((a, b) => b.height - a.height); // latest first
     }
 

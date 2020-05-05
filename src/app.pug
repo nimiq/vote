@@ -26,21 +26,22 @@
     .nq-card.voting(v-if='!votingConfig && !currentResults')
         .nq-card-header
             h1 Hello there!
-            p.sub Currently no voting.
+            p.sub No voting is currently open.
 
         .nq-card-body
             template(v-if="nextVoting")
                 p(v-if="nextVoting.announcement") {{ nextVoting.announcement }}
                 p(v-if="nextVoting.link || nextVoting.announcementLink")
                     a.nq-link(:href="`${nextVoting.announcementLink || nextVoting.link}`" target='_blank') Click here for more info.
-            p(v-else).
-                No voting is taking place at this moment. Follow us on
-                #[a(href='https://twitter.com/nimiq') Twitter]
+            p(v-else) No voting is taking place at this moment.
+            p.
+                To stay up-to-date about votings and Nimiq in general, follow us on
+                #[a.nq-link(href='https://twitter.com/nimiq') Twitter]
                 or join us on
-                #[a(href='https://t.me/joinchat/AAAAAEJW-ozFwo7Er9jpHw') Telegram]
+                #[a.nq-link(href='https://t.me/joinchat/AAAAAEJW-ozFwo7Er9jpHw') Telegram]
                 and
-                #[a(href='https://www.nimiq.com/community/') many more social channels]
-                to stay up-to-date. Looking forward to chat with you!
+                #[a.nq-link(href='https://www.nimiq.com/community/') many more social channels].
+                Looking forward to seeing you there!
             p(v-if='pastVotings.length') Loading latest results...
 
     // voting /////////////////////////////////////////////////////////////////
@@ -120,7 +121,7 @@
                             :class='{mini: barSizePerLuna * vote.value < minBarItemSize}'
                             :title='`${vote.sender} - ${formatLunaAsNim(vote.value)} - ${(vote.value * percentPerLuna).toFixed(2)}%`'
                             :style='`background: ${color(vote.sender)}; flex-grow: ${vote.value * barSizePerLuna};`')
-                        .vote.others(
+                        .vote.others(v-if='otherVotesValue(result) > 0'
                             :title='`Others - ${formatLunaAsNim(otherVotesValue(result))} - ${(otherVotesValue(result) * percentPerLuna).toFixed(2)}%`'
                             :style='`flex-grow: ${otherVotesValue(result) * barSizePerLuna}`')
                     .label
