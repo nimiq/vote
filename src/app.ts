@@ -6,8 +6,8 @@ import stringHash from 'string-hash';
 import draggable from 'vuedraggable';
 import { Tooltip, InfoCircleSmallIcon, CloseIcon } from '@nimiq/vue-components';
 
-import { BaseVote, VoteTypes, BaseChoice, Config, Option, ElectionResults, CastVote, ElectionVote, ElectionStats }
-    from './lib/types';
+import { BaseVote, VoteTypes, BaseChoice, Config, Option, ElectionResults, CastVote, ElectionVote, ElectionStats,
+    ElectionResult } from './lib/types';
 import { loadNimiqCoreOnly, loadNimiqWithCryptography } from './lib/CoreLoader';
 import { serializeVote, parseVote, voteTotalWeight, voteAddress } from './lib/votes';
 import { loadConfig, loadResults } from './lib/data';
@@ -33,6 +33,7 @@ type Error = {
 }
 
 const appLogo = `${window.location.origin}/android-icon-192x192.png`;
+const maxVotesInGraph = 10;
 
 @Component({ components: { draggable, Tooltip, InfoCircleSmallIcon, CloseIcon } })
 export default class App extends Vue {
@@ -409,8 +410,8 @@ export default class App extends Vue {
             stats,
         };
 
-        log += `Results:\n${JSON.stringify(results, null, ' ')}\n\n`;
-        console.log(`Voting log\n\n${log}`);
+        console.log(`Voting log\n\n${log}\n\nResults:`);
+        console.log(JSON.stringify(results, null, ' '));
         return results;
     }
 
@@ -503,6 +504,24 @@ export default class App extends Vue {
         return (this.currentResults as ElectionResults).results
             .map((result) => result.value)
             .reduce((a, b) => Math.max(a, b));
+    }
+
+    topVotes(result: ElectionResult): ElectionVote[] {
+        return result.votes.slice()
+            .sort((a, b) => b.value - a.value) // highest value first
+            .slice(0, maxVotesInGraph)
+            .sort((a, b) => b.height - a.height); // latest first
+    }
+
+    otherVotesValue(result: ElectionResult): number {
+        const topVotesTotalValue = this.topVotes(result).reduce((sum, vote) => sum + vote.value, 0);
+        return result.value - topVotesTotalValue;
+    }
+
+    formatLunaAsNim(luna: number): string {
+        const nim = Math.round(luna / 100000).toFixed(0);
+        // return `${nim.replace(/.{3}/g, '$&\'').trim()}NIM`;
+        return `${nim.replace(/\B(?=(\d{3})+(?!\d))/g, '\'').trim()}NIM`;
     }
 
     get isPreliminary(): boolean {

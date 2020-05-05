@@ -116,10 +116,13 @@
                 .result(v-for='result of currentResults.results')
                     .votes
                         .vote.space(:style='`flex-grow: ${(maxChoiceValue - result.value) * barSizePerLuna}`')
-                        .vote(v-for='vote of result.votes' v-if='vote.value * percentPerLuna > 0.1'
+                        .vote(v-for='vote of topVotes(result)' v-if='vote.value * percentPerLuna > 0.1'
                             :class='{mini: barSizePerLuna * vote.value < minBarItemSize}'
-                            :title='`${vote.sender} - ${Math.round(vote.value / 100000)}NIM - ${(vote.value * percentPerLuna).toFixed(2)}%`'
+                            :title='`${vote.sender} - ${formatLunaAsNim(vote.value)} - ${(vote.value * percentPerLuna).toFixed(2)}%`'
                             :style='`background: ${color(vote.sender)}; flex-grow: ${vote.value * barSizePerLuna};`')
+                        .vote.others(
+                            :title='`Others - ${formatLunaAsNim(otherVotesValue(result))} - ${(otherVotesValue(result) * percentPerLuna).toFixed(2)}%`'
+                            :style='`flex-grow: ${otherVotesValue(result) * barSizePerLuna}`')
                     .label
                         | {{ result.label}}
                         .note {{ Math.round(result.value / currentResults.stats.luna * 100) }}%
