@@ -3,7 +3,7 @@ import { fetchJson } from './network';
 import { ElectionResults, Config, VoteTypes } from './types';
 import { dummyConfig, dummyResult } from './dummies';
 import { voteAddress, ELEMENT_SEPARATOR, WEIGHT_SEPARATOR, serializeVote } from './votes';
-import { allUnique } from './util';
+import { allUnique, blockDate } from './util';
 
 async function _load(url: string): Promise<Array<Config>> {
     try {
@@ -68,9 +68,8 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
     console.log('All good!');
 
     if (height) {
-        const now = new Date().getTime();
-        const start = new Date(now + (config.start - height) * 60000);
-        const end = new Date(now + (config.end - height) * 60000);
+        const start = blockDate(config.start, height);
+        const end = blockDate(config.end, height);
         console.log(`The voting will approximately start at ${start} and end at ${end}.`);
     }
 };
