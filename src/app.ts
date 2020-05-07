@@ -13,15 +13,16 @@ import { serializeVote, parseVote, voteTotalWeight, voteAddress } from './lib/vo
 import { loadConfig, loadResults } from './lib/data';
 import { findTxBetween, watchApi, blockRewardsSince } from './lib/network';
 import { testnet, debug, dummies, contactInfo } from './lib/const';
+import { blockDate } from './lib/util';
 
 const distinctColors = require('distinct-colors').default;
 
 Vue.mixin({
     created() {
-        const enums: any = { VoteTypes };
+        const toAdd: any = { VoteTypes };
         const target = this as any;
-        for (const name of Object.keys(enums)) {
-            target[name] = Object.freeze(enums[name]);
+        for (const name of Object.keys(toAdd)) {
+            target[name] = Object.freeze(toAdd[name]);
         }
     },
 });
@@ -506,8 +507,12 @@ export default class App extends Vue {
             .reduce((a, b) => Math.max(a, b));
     }
 
+    get isPreliminary(): boolean {
+        return this.currentResults === this.preliminaryResults;
+    }
+
     topVotes(result: ElectionResult): ElectionVote[] {
-        // TODO cache results, ideally use a getting so Vue caches automatically
+        // TODO cache results, ideally make Vue cache results automatically
         return result.votes.slice()
             .sort((a, b) => b.value - a.value) // highest value first
             .slice(0, maxVotesInGraph) // top x votes
@@ -521,16 +526,16 @@ export default class App extends Vue {
 
     formatLunaAsNim(luna: number): string {
         const nim = Math.round(luna / 100000).toFixed(0);
-        // return `${nim.replace(/.{3}/g, '$&\'').trim()}NIM`;
-        return `${nim.replace(/\B(?=(\d{3})+(?!\d))/g, '\'').trim()}NIM`;
-    }
-
-    get isPreliminary(): boolean {
-        return this.currentResults === this.preliminaryResults;
+        return `${nim.replace(/\B(?=(\d{3})+(?!\d))/g, '\'').trim()} NIM`;
     }
 
     color(address: string): string {
         const index = stringHash(address) % this.colors.length;
         return this.colors[index];
+    }
+
+    blockDate(block: number): string {
+        const date = blockDate(block, this.height);
+        return date.toLocaleString();
     }
 }

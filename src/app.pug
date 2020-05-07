@@ -97,15 +97,27 @@
     // results ////////////////////////////////////////////////////////////////
 
     .nq-card.results(v-else ref='results')
-        .nq-card-header(v-if='voted')
-            h1 Thank you for voting!
-            p.sub.
-                Your vote was submitted to the blockchain. #[br] Find it here:
-                #[a.nq-link(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${vote.tx.hash}`' target='_blank') nimiq.watch].
-            .note Verification may take a few minutes. #[a.nq-link(href="javascript:location.reload()") Refresh.]
-        .nq-card-header(v-else)
-            h1 {{ resultsConfig.label }}
-            p.sub Voting results
+        .nq-card-header
+            template(v-if='voted')
+                h1 Thank you for voting!
+                p.sub.
+                    Your vote was submitted to the blockchain. #[br] Find it here:
+                    #[a.nq-link(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${vote.tx.hash}`' target='_blank') nimiq.watch].
+                .note Verification may take a few minutes. #[a.nq-link(href="javascript:location.reload()") Refresh.]
+            template(v-else)
+                h1 {{ resultsConfig.label }}
+                p.sub Voting results
+
+            Tooltip(:autoWidth='true' preferredPosition='bottom left' v-if='currentResults && resultsConfig')
+                InfoCircleSmallIcon(slot='trigger')
+                p.
+                    This voting took place from block {{ '#'+resultsConfig.start }} to {{ '#'+resultsConfig.end }},
+                    approximately {{ blockDate(resultsConfig.start) }} to {{ blockDate(resultsConfig.end) }}.
+                p.
+                    In total, {{ currentResults.stats.votes }} votes representing
+                    {{ formatLunaAsNim(currentResults.stats.luna) }} were cast.
+                p(v-for='result of currentResults.results').
+                    {{ result.label }}: {{ result.votes.length }} votes representing {{ formatLunaAsNim(result.value) }}.
 
         .nq-card-body
             p(v-if='currentResults === false') Could not load results. Maybe the results are not available yet.
