@@ -1,0 +1,216 @@
+{
+    "label": "Should the NIM supply growth curve be adjusted?",
+    "results": [
+        {
+            "label": "Yes",
+            "value": 203166516762,
+            "votes": [
+                {
+                    "sender": "NQ44 5F6P ER80 NMCU K78G FRN6 F0A0 R2XK 565Y",
+                    "height": 964686,
+                    "value": 399999999
+                },
+                {
+                    "sender": "NQ49 AHN4 CAV1 JPMJ 0BTY 06TC NNNK DUCT NSY2",
+                    "height": 964607,
+                    "value": 319999
+                },
+                {
+                    "sender": "NQ22 270P LJU2 QNYD TE31 KAS8 S5L7 74R8 YLPX",
+                    "height": 964593,
+                    "value": 399999999
+                },
+                {
+                    "sender": "NQ55 5UE3 G14X 8R05 ADNP LX1R VJRL ATPT YSE4",
+                    "height": 964587,
+                    "value": 399999999
+                },
+                {
+                    "sender": "NQ47 JM53 0PDV 9RQ7 83LT JG41 UF1B Q285 2LN0",
+                    "height": 963957,
+                    "value": 399999998
+                },
+                {
+                    "sender": "NQ22 Q6TJ QBVS MBAS FQS4 YL2G 8U27 8VFS L5TS",
+                    "height": 962788,
+                    "value": 399999999
+                },
+                {
+                    "sender": "NQ94 VQPB 9HHJ 1GYB NH1A D78T 0NCJ 81U3 0LLB",
+                    "height": 961618,
+                    "value": 399999999
+                },
+                {
+                    "sender": "NQ66 U3PA ASFH HANA CASM SGKS E7XH P67S PQ0E",
+                    "height": 961123,
+                    "value": 399999999
+                },
+                {
+                    "sender": "NQ26 8MMT 8317 VD0D NNKE 3NVA GBVE UY1E 9YDF",
+                    "height": 960896,
+                    "value": 48910952788
+                },
+                {
+                    "sender": "NQ53 1FQS 0X38 NH64 AQBN 78DR 49U5 SM86 RNFE",
+                    "height": 960061,
+                    "value": 399999999
+                },
+                {
+                    "sender": "NQ49 NXTA 285J VH1U PKNA 6X2P 79JS B78R HGY7",
+                    "height": 959956,
+                    "value": 361353422
+                },
+                {
+                    "sender": "NQ49 EASY CBKX 3LYM 1YY2 DSL7 L8XR DHBJ NGVL",
+                    "height": 959912,
+                    "value": 102756491025
+                },
+                {
+                    "sender": "NQ69 R83V YQXR L0LF YPEY 11KH SKX9 T7BY CBVH",
+                    "height": 959883,
+                    "value": 11075821652
+                },
+                {
+                    "sender": "NQ11 3FN1 0XVS DQ6M H7UP N027 90F9 7J0F P5YL",
+                    "height": 959833,
+                    "value": 769999997
+                },
+                {
+                    "sender": "NQ36 71PB 0TXY AUA9 JG2Y 2JQG PQBF YSVK KNTA",
+                    "height": 959606,
+                    "value": 30533096476
+                },
+                {
+                    "sender": "NQ40 BS62 4CFX 7TDB A4LG B6CF JX1T AH9M U5B2",
+                    "height": 959595,
+                    "value": 399999999
+                },
+                {
+                    "sender": "NQ28 5YF5 M7XJ 2RMN YG52 FN44 MJS1 LHKL NURL",
+                    "height": 959380,
+                    "value": 399999999
+                },
+                {
+                    "sender": "NQ07 U8SP XTLN LDEJ UCBB 7XUG E8GY VRRV GFVD",
+                    "height": 959194,
+                    "value": 1494421661
+                },
+                {
+                    "sender": "NQ83 VAQ3 D390 A783 XNG7 URH7 0QP6 1H97 VRD4",
+                    "height": 959170,
+                    "value": 299999997
+                },
+                {
+                    "sender": "NQ44 3X5U 6AKR U93K VP9V X4X7 STMG 6KPB C4XM",
+                    "height": 959133,
+                    "value": 117999994
+                },
+                {
+                    "sender": "NQ41 XTC8 10NL ML3P QFA7 KG1U 7NBM P5CQ 6D99",
+                    "height": 959051,
+                    "value": 399899999
+                },
+                {
+                    "sender": "NQ38 3Q1S M1SQ G1SP F32Y BQAS 061X 3VLX 6U8A",
+                    "height": 958931,
+                    "value": 399999997
+                },
+                {
+                    "sender": "NQ37 FFH6 X8S5 DXQS 6962 AYC1 6A6U 0CY1 B9X3",
+                    "height": 958925,
+                    "value": 410929999
+                },
+                {
+                    "sender": "NQ61 DLD2 6DG7 URC9 3X64 8GRF AD8E EKP6 73HE",
+                    "height": 958918,
+                    "value": 399999999
+                },
+                {
+                    "sender": "NQ04 7TNC RG0V XE7G CU33 3UQG GF5U 0SRH 7JM5",
+                    "height": 958871,
+                    "value": 229999
+                },
+                {
+                    "sender": "NQ57 Y5LK MMX6 2SCJ GJUS P8PQ 3KFJ 5EY4 5XYY",
+                    "height": 958864,
+                    "value": 399999999
+                },
+                {
+                    "sender": "NQ95 EAC9 EKPL QY45 TU8J 4JN5 E3NY 4EUM K4LB",
+                    "height": 958806,
+                    "value": 334999775
+                },
+                {
+                    "sender": "NQ61 N8PU QBRV X0C8 KAEQ LAUS QFQ0 90PR B8JR",
+                    "height": 958779,
+                    "value": 99999997
+                },
+                {
+                    "sender": "NQ51 FVY9 VRFB 72DD X6M1 EBGL VC94 K5SE QEXV",
+                    "height": 958763,
+                    "value": 399999998
+                }
+            ]
+        },
+        {
+            "label": "No",
+            "value": 32496649720,
+            "votes": [
+                {
+                    "sender": "NQ61 323Y YXLT CLP3 9DP2 NG33 VLYY L7B3 87HQ",
+                    "height": 962686,
+                    "value": 19539733377
+                },
+                {
+                    "sender": "NQ42 NNL7 RNTJ YLS4 AUSV T1YM M0FY 2L40 FC71",
+                    "height": 960103,
+                    "value": 399999998
+                },
+                {
+                    "sender": "NQ33 2ETP 501X GTAA SK02 1ENC XBJG F40V TCUF",
+                    "height": 960063,
+                    "value": 10513602830
+                },
+                {
+                    "sender": "NQ97 085G K1Y0 SJQU 7V8H ABSC KY8G NSJM SGF2",
+                    "height": 959754,
+                    "value": 399999999
+                },
+                {
+                    "sender": "NQ98 9H6F PMP2 580A RLGL 3HC1 68CB JRX1 09Y6",
+                    "height": 959654,
+                    "value": 399684999
+                },
+                {
+                    "sender": "NQ09 T0GL TMTP 2MAU 9NDD FRJ8 H129 T82X 2PUG",
+                    "height": 958827,
+                    "value": 399999999
+                },
+                {
+                    "sender": "NQ79 237X 8LPR CDTM BN10 LF07 K9NH AN5M R20P",
+                    "height": 958767,
+                    "value": 158098927
+                },
+                {
+                    "sender": "NQ34 PM92 0QRY Y7JB A90V A4G6 3QK6 UVYP GAM5",
+                    "height": 958767,
+                    "value": 285299593
+                },
+                {
+                    "sender": "NQ06 YLPB H2CK 7XV6 CYJ4 52CY 33VE TMGU 5FXB",
+                    "height": 958720,
+                    "value": 229999
+                },
+                {
+                    "sender": "NQ50 7FNU L8QC 419X T6N3 DT1L ACFD 0C0H 7PF1",
+                    "height": 958674,
+                    "value": 399999999
+                }
+            ]
+        }
+    ],
+    "stats": {
+        "votes": 39,
+        "luna": 235663166482
+    }
+}
