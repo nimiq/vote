@@ -110,12 +110,15 @@
 
             Tooltip(:autoWidth='true' preferredPosition='bottom left' v-if='currentResults && resultsConfig')
                 InfoCircleSmallIcon(slot='trigger')
-                p.
+                p(v-if='isPreliminary').
+                    This voting started at block {{ '#'+resultsConfig.start }} and will end at {{ '#'+resultsConfig.end }},
+                    approximately {{ blockDate(resultsConfig.start) }} to {{ blockDate(resultsConfig.end) }}.
+                p(v-else).
                     This voting took place from block {{ '#'+resultsConfig.start }} to {{ '#'+resultsConfig.end }},
                     approximately {{ blockDate(resultsConfig.start) }} to {{ blockDate(resultsConfig.end) }}.
                 p.
                     In total, {{ currentResults.stats.votes }} votes representing
-                    {{ formatLunaAsNim(currentResults.stats.luna) }} were cast.
+                    {{ formatLunaAsNim(currentResults.stats.luna) }} were cast{{ isPreliminary ? ' so far' : '' }}.
                 p(v-for='result of currentResults.results').
                     {{ result.label }}: {{ result.votes.length }} votes representing {{ formatLunaAsNim(result.value) }}.
 
@@ -142,9 +145,8 @@
                     .debug(v-if='debug') maxVoteCount {{ maxVoteCount }}, maxValue: {{ maxChoiceValue }}Luna, percentPerLuna {{ percentPerLuna }}%, minSize {{ minBarItemSize }}
 
         .nq-card-footer
-            p Bars indicate the weight of a vote. #[br]
-                template(v-if='isPreliminary') Results are preliminary. #[br]
-                span.note Votes below 0.1% are hidden.
+            p Bars indicate the weight of a vote.
+                template(v-if='isPreliminary') #[br] Results are preliminary.
             .vote-again(v-if='votingConfig')
                 .note You can change your vote by voting again. #[br] The last vote per address counts.
                 button.vote-again.nq-button-s(@click='vote = null') Vote Again

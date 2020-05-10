@@ -536,6 +536,15 @@ export default class App extends Vue {
 
     blockDate(block: number): string {
         const date = blockDate(block, this.height);
-        return date.toLocaleString();
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            timeZone: 'UTC',
+            timeZoneName: 'short',
+            hour12: false,
+        });
     }
 }

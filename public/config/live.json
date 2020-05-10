@@ -1,19 +1,19 @@
 {
-    "votings": [{
-      "start": 1082490,
-      "end": 1096888,
-      "label": "Should the NIM supply growth curve be adjusted?",
-      "name": "change-curve",
-      "type": "singleChoice",
-      "link": "https://www.nimiq.com/blog/nimiq-20-supply-curve-voting/",
-      "announcement": "The vote on \"Should Nimiq adjust the current supply curve?\" will start on Friday May 8, 2020 at approximately 12:00 noon UTC.",
-      "announcementLink": "https://www.nimiq.com/blog/nimiq-20-supply-curve-voting-procedure/",
-      "choices": [{
-        "name": "yes",
-        "label": "Yes"
-      }, {
-        "name": "no",
-        "label": "No"
-      }]
+  "votings": [{
+    "start": 1082458,
+    "end": 1096863,
+    "label": "Should the NIM supply growth curve be adjusted?",
+    "name": "change-curve",
+    "type": "singleChoice",
+    "link": "https://www.nimiq.com/blog/nimiq-20-supply-curve-voting/",
+    "announcement": "The vote on \"Should Nimiq adjust the current supply curve?\" will start on Friday May 8, 2020 at approximately 12:00 noon UTC.",
+    "announcementLink": "https://www.nimiq.com/blog/nimiq-20-supply-curve-voting-procedure/",
+    "choices": [{
+      "name": "yes",
+      "label": "Yes"
+    }, {
+      "name": "no",
+      "label": "No"
     }]
-  }
+  }]
+}
