@@ -315,7 +315,7 @@ export default class App extends Vue {
         const addressChunk = [];
         for (let i = 0; i < addresses.length; i += Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT) {
             addressChunk.push(
-                addresses.slice(i, Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT),
+                addresses.slice(i, i + Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT),
             );
         }
 
