@@ -94,7 +94,7 @@ export default class App extends Vue {
             }
         }
 
-        console.log('Loading voting app: Loaded config', new Date().getTime() - start, this.height, this.configs);
+        console.debug('Loading voting app: Loaded config', new Date().getTime() - start, this.height, this.configs);
 
         // Parse config and find current voting.
         // If name is given, only consider the config with that name
@@ -170,9 +170,9 @@ export default class App extends Vue {
             if (this.votingConfig?.end === this.height) {
                 // When the vote has just ended, print the results to console
                 const results = await this.showPreliminaryResults();
-                console.warn(`Voting results for ${this.votingConfig.name}:`);
-                console.log(JSON.stringify(results));
-                console.log(results);
+                console.debug(`Voting results for ${this.votingConfig.name}:`);
+                console.debug(JSON.stringify(results));
+                console.debug(results);
             }
         });
 
@@ -288,13 +288,13 @@ export default class App extends Vue {
 
         await Vue.nextTick();
 
-        console.log('counting votes: find all votes', config);
+        console.debug('counting votes: find all votes', config);
         const start = new Date().getTime();
 
         // Get all valid votes
         const addresses: string[] = [];
         (await findTxBetween(votingAddress, config.start, end, testnet)).forEach((tx) => {
-            console.log(JSON.stringify(tx, null, ' '));
+            console.debug(JSON.stringify(tx, null, ' '));
             if (addresses.includes(tx.sender)) return; // only last vote countes
             try {
                 // eslint-disable-next-line
@@ -339,7 +339,7 @@ export default class App extends Vue {
 
         stats.votes = votes.length;
         log += `Counted votes:\n${JSON.stringify(votes, null, ' ')}\n\n`;
-        console.log('counting votes: calculate balance', new Date().getTime() - start, addresses, votes);
+        console.debug('counting votes: calculate balance', new Date().getTime() - start, addresses, votes);
 
         // Assign balances to votes
         for (const vote of votes) {
@@ -368,7 +368,7 @@ export default class App extends Vue {
 
         const balances = votes.map((vote) => ({ address: vote.tx.sender, balance: vote.value }));
         log += `Balances at the last voting block:\n${JSON.stringify(balances, null, ' ')}\n\n`;
-        console.log('counting votes: summarize', new Date().getTime() - start, votes);
+        console.debug('counting votes: summarize', new Date().getTime() - start, votes);
 
         // Summarize votes
         const sums = new Map<string, number>(config.choices.map((choice) => [choice.name, 0]));
@@ -398,7 +398,7 @@ export default class App extends Vue {
         }
 
         log += `NIM per choice:\n${JSON.stringify(sums, null, ' ')}\n\n`;
-        console.log('counting votes: return', new Date().getTime() - start, sums, votesPerChoice);
+        console.debug('counting votes: return', new Date().getTime() - start, sums, votesPerChoice);
 
         // Format results
         const results = {
@@ -411,8 +411,8 @@ export default class App extends Vue {
             stats,
         };
 
-        console.log(`Voting log\n\n${log}\n\nResults:`);
-        console.log(JSON.stringify(results, null, ' '));
+        console.debug(`Voting log\n\n${log}\n\nResults:`);
+        console.debug(JSON.stringify(results, null, ' '));
         return results;
     }
 
