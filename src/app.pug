@@ -145,7 +145,7 @@
                     .debug(v-if='debug') maxVoteCount {{ maxVoteCount }}, maxValue: {{ maxChoiceValue }}Luna, percentPerLuna {{ percentPerLuna }}%, minSize {{ minBarItemSize }}
 
         .nq-card-footer
-            p Bars indicate the weight of a vote.
+            p.graph-description Bars indicate the weight of a vote.
                 template(v-if='isPreliminary') #[br] Results are preliminary.
             .vote-again(v-if='votingConfig')
                 .note You can change your vote by voting again. #[br] The last vote per address counts.
