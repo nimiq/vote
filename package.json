@@ -14,7 +14,7 @@
     "@nimiq/network-client": "^0.4.1",
     "@nimiq/style": "^0.7.6",
     "@nimiq/utils": "^0.4.6",
-    "@nimiq/vue-components": "https://github.com/nimiq/vue-components.git#build/master",
+    "@nimiq/vue-components": "https://github.com/nimiq/vue-components.git#build/vote",
     "@types/string-hash": "^1.1.1",
     "@types/vuedraggable": "^2.23.0",
     "core-js": "^3.6.4",

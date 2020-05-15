@@ -1039,9 +1039,9 @@
   dependencies:
     big-integer "^1.6.44"
 
-"@nimiq/vue-components@https://github.com/nimiq/vue-components.git#build/master":
+"@nimiq/vue-components@https://github.com/nimiq/vue-components.git#build/vote":
   version "0.1.0"
-  resolved "https://github.com/nimiq/vue-components.git#b5dd9e8b2465d1d99e853197f4a9400a12d13fb7"
+  resolved "https://github.com/nimiq/vue-components.git#3528395b61ed8a05ab3845d4c0867a62e8239c21"
   dependencies:
     "@nimiq/style" "^0.8.0"
     big-integer "^1.6.44"
