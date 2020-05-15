@@ -1041,7 +1041,7 @@
 
 "@nimiq/vue-components@https://github.com/nimiq/vue-components.git#build/master":
   version "0.1.0"
-  resolved "https://github.com/nimiq/vue-components.git#4aafb0a1b803dc7870e982457636f25446a1b3e2"
+  resolved "https://github.com/nimiq/vue-components.git#b5dd9e8b2465d1d99e853197f4a9400a12d13fb7"
   dependencies:
     "@nimiq/style" "^0.8.0"
     big-integer "^1.6.44"
@@ -10764,9 +10764,9 @@ vue-property-decorator@^8.3.0:
     vue-class-component "^7.1.0"
 
 vue-property-decorator@^8.4.0:
-  version "8.4.1"
-  resolved "https://registry.yarnpkg.com/vue-property-decorator/-/vue-property-decorator-8.4.1.tgz#fd8045b8678e1348fed57f9149279e00e404ed38"
-  integrity sha512-8R4Us7DxFO0rwAL/2fv6vaZL8Oa4n/HGanHODYGTcvQHwT0FYJr9UuuFm2GoWAIXQu1mDO03HNeHswFp9vmTVA==
+  version "8.4.2"
+  resolved "https://registry.yarnpkg.com/vue-property-decorator/-/vue-property-decorator-8.4.2.tgz#016e17f259f73bc547e77a50ce282ba18db4ee41"
+  integrity sha512-IqbARlvgPE2pzKfbecKxsu2yEH0Wv7hfHR6m4eZA3LTnNw9hveAX77vDfLFyTeMISS5N7Kucp/xRSHjcQ6bAfQ==
   dependencies:
     vue-class-component "^7.1.0"
 

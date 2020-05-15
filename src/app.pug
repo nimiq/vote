@@ -58,7 +58,7 @@
                     br
                     a.nq-link(:href="votingConfig.link" target='_blank') Click here for more info.
 
-            Tooltip(:autoWidth='true' preferredPosition='bottom left')
+            Tooltip(preferredPosition='bottom left' :styles="{ marginLeft: '-1rem', minWidth: '21rem' }")
                 InfoCircleSmallIcon(slot='trigger')
                 | This poll is open until block {{ '#'+votingConfig.end }}
                 .note.small ~ {{ timeRemaining }}
@@ -108,19 +108,26 @@
                 h1 {{ resultsConfig.label }}
                 p.sub Voting results
 
-            Tooltip(:autoWidth='true' preferredPosition='bottom left' v-if='currentResults && resultsConfig')
+            Tooltip(v-if='currentResults && resultsConfig' preferredPosition='bottom left'
+                :styles="{ marginLeft: '-1rem', minWidth: isPreliminary ? '34.5rem' : '30rem' }")
                 InfoCircleSmallIcon(slot='trigger')
                 p(v-if='isPreliminary').
-                    This voting started at block {{ '#'+resultsConfig.start }} and will end at {{ '#'+resultsConfig.end }},
-                    approximately {{ blockDate(resultsConfig.start) }} to {{ blockDate(resultsConfig.end) }}.
+                    This voting started at block {{ '#'+resultsConfig.start }}#[br]
+                    and will end at {{ '#'+resultsConfig.end }},#[br]
+                    approx. {{ blockDate(resultsConfig.start) }}#[br]
+                    to {{ blockDate(resultsConfig.end) }}.
                 p(v-else).
-                    This voting took place from block {{ '#'+resultsConfig.start }} to {{ '#'+resultsConfig.end }},
-                    approximately {{ blockDate(resultsConfig.start) }} to {{ blockDate(resultsConfig.end) }}.
+                    This voting took place#[br]
+                    from block {{ '#'+resultsConfig.start }}#[br]
+                    to {{ '#'+resultsConfig.end }},#[br]
+                    approx. {{ blockDate(resultsConfig.start) }}#[br]
+                    to {{ blockDate(resultsConfig.end) }}.
                 p.
-                    In total, {{ currentResults.stats.votes }} votes representing
+                    In total, {{ currentResults.stats.votes }} votes representing#[br]
                     {{ formatLunaAsNim(currentResults.stats.luna) }} were cast{{ isPreliminary ? ' so far' : '' }}.
                 p(v-for='result of currentResults.results').
-                    {{ result.label }}: {{ result.votes.length }} votes representing {{ formatLunaAsNim(result.value) }}.
+                    {{ result.label }}: {{ result.votes.length }} votes representing#[br]
+                    {{ formatLunaAsNim(result.value) }}.
 
         .nq-card-body
             p(v-if='currentResults === false') Could not load results. Maybe the results are not available yet.

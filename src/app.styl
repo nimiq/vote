@@ -52,16 +52,21 @@ p
       position absolute
       top 2rem
       right 2rem
+      font-size 2rem
+      text-align right
 
       svg
         color rgba(nimiq-blue, .25)
-        width 2rem
-        height 2rem
 
       .tooltip-box
-        min-width 21rem
-        text-align right
+        p
+          font-size inherit
 
+        :first-child
+          margin-top 0
+
+        :last-child
+          margin-bottom 0
 
   .nq-card-body
     flex 1 0
