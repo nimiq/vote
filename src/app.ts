@@ -94,7 +94,7 @@ export default class App extends Vue {
             }
         }
 
-        console.debug('Loading voting app: Loaded config', new Date().getTime() - start, this.height, this.configs);
+        console.log('Loading voting app: Loaded config', new Date().getTime() - start, this.height, this.configs);
 
         // Parse config and find current voting.
         // If name is given, only consider the config with that name
@@ -114,8 +114,14 @@ export default class App extends Vue {
                 choices.push({
                     label: choice.label || choice.name,
                     name: choice.name,
-                    weight: config.type === VoteTypes.weightedChoices ? 50 : 1,
+                    weight: config.type === VoteTypes.weightedChoices ? 50
+                        : config.type === VoteTypes.ranking ? Math.random()
+                            : 1,
                 });
+            }
+
+            if (config.type === VoteTypes.ranking) {
+                this.choices = choices.sort((a, b) => b.weight - a.weight);
             }
 
             // config for current voting loaded
@@ -225,7 +231,7 @@ export default class App extends Vue {
                 }));
             }
             case VoteTypes.ranking: {
-                return this.choices.map((choice, pos) => ({ name: choice.name, weight: this.choices.length - pos }));
+                return this.choices.map((choice) => ({ name: choice.name, weight: 1 }));
             }
             default: throw new Error(`Vote type "${type}" not implemented!`);
         }
@@ -242,9 +248,10 @@ export default class App extends Vue {
     async submitVote() {
         const { votingConfig: config, hub, height, votingAddress } = this;
         const vote: BaseVote = { name: config!.name, choices: this.serializeChoices() };
+        console.log(JSON.stringify(vote));
         const serialized = serializeVote(vote, config!.type);
-        console.log('Submitted vote:', serialized);
-        console.log('parsed', parseVote(serialized, config!));
+        // parsing again is the sanitiy check of the serialization
+        console.log('Submitted vote:', serialized, parseVote(serialized, config!));
 
         const signedTransaction = await hub.checkout({
             appName: 'Nimiq Vote',
@@ -546,5 +553,14 @@ export default class App extends Vue {
             timeZoneName: 'short',
             hour12: false,
         });
+    }
+
+    formatPosition(position: number): string {
+        switch (position) {
+            case 1: return '1st';
+            case 2: return '2nd';
+            case 3: return '3rd';
+            default: return `${position}th`;
+        }
     }
 }

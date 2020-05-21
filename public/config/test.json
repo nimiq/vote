@@ -14,11 +14,12 @@
       "label": "No"
     }]
   }, {
-    "start": 975789,
-    "end": 982988,
-    "label": "What is the optimal supply curve?",
-    "name": "pick-curve",
+    "start": 985538,
+    "end": 993381,
+    "label": "Which NIM supply curve do you prefer?",
+    "name": "rank-curve",
     "type": "ranking",
+    "link": "https://www.nimiq.com/blog/nimiq-20-supply-curve-voting/",
     "choices": [{
       "name": "green",
       "label": "Green curve"
@@ -30,7 +31,7 @@
       "label": "Blue curve"
     }, {
       "name": "none",
-      "label": "None of the choices"
+      "label": "None of these"
     }]
   }]
 }

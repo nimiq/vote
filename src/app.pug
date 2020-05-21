@@ -53,14 +53,19 @@
                 span(v-if='type === VoteTypes.singleChoice') Please make your choice.
                 span(v-else-if='type === VoteTypes.multipleChoice') Please select one or more options.
                 span(v-else-if='type === VoteTypes.weightedChoice') Please weigh the items by preference.
-                span(v-else-if='type === VoteTypes.ranking') Please rank the items by preference.
+                span(v-else-if='type === VoteTypes.ranking') Drag items into position to rank by preference.
                 span(v-if='votingConfig.link')
                     br
                     a.nq-link(:href="votingConfig.link" target='_blank') Click here for more info.
 
-            Tooltip(preferredPosition='bottom left' :styles="{ marginLeft: '-1rem', minWidth: '21rem' }")
+            Tooltip(preferredPosition='bottom left' :styles="{ marginLeft: '-1rem', minWidth: type === VoteTypes.ranking ? '42rem' : '21rem' }")
                 InfoCircleSmallIcon(slot='trigger')
-                | This poll is open until block {{ '#'+votingConfig.end }}
+                p(v-if='type === VoteTypes.ranking').
+                    Your ranked choices will be counted according to a normalized geometric progression.#[br]
+                    That means the 1st choice gets 1 point, the 2nd 1/2 points, 3rd 1/4 points and 4th 1/8 points.
+                    Next, the point values are normalized to a total of 1 and the resulting factor will be mulitplied with the NIM in your vote.
+                    This way, each NIM represents exactly one vote distributed over your choices.
+                p This poll is open until block {{ '#'+votingConfig.end }}
                 .note.small ~ {{ timeRemaining }}
 
         .nq-card-body
@@ -81,9 +86,9 @@
 
             .choices(v-else-if='type === VoteTypes.ranking')
                 .left
-                    .number(v-for='(choice, index) of choices' :key='choice.name') {{ index + 1 }}
-                draggable.right(v-model="choices" group="choices" @start="drag=true" @end="drag=false")
-                    .choice(v-for='choice of choices' :key='choice.name') {{ choice.label }}
+                    .number(v-for='(choice, index) of choices' :key='choice.name') {{ formatPosition(index + 1) }}
+                draggable.right(v-model="choices" group="choiceRanking" @start="drag=true" @end="drag=false")
+                    .choice(v-for='choice in choices' :key='choice.name') {{ choice.label }}
 
         .nq-card-footer
             p.rules Vote by sending 0.00001 NIM. #[br] Every NIM in your address at the end of the voting period equals one vote.
@@ -101,8 +106,8 @@
             template(v-if='voted')
                 h1 Thank you for voting!
                 p.sub.
-                    Your vote was submitted to the blockchain. #[br] Find it here:
-                    #[a.nq-link(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${vote.tx.hash}`' target='_blank') nimiq.watch].
+                    Your vote was submitted
+                    #[a.nq-link(:href='`http://${testnet ? "test." : ""}nimiq.watch/#${vote.tx.hash}`' target='_blank') to the blockchain].
                 .note Verification may take a few minutes. #[a.nq-link(href="javascript:location.reload()") Refresh.]
             template(v-else)
                 h1 {{ resultsConfig.label }}
@@ -133,7 +138,7 @@
             p(v-if='currentResults === false') Could not load results. Maybe the results are not available yet.
             p(v-else-if='!currentResults') Loading... ({{ consensus ? 'consensus established, scanning blockchain' : 'waiting for consensus'}})
             p(v-else-if='!currentResults.stats.votes')
-                span(v-if='isPreliminary') No results yet. It might take a few minutes for the results to show.
+                span(v-if='isPreliminary') No results yet. It might take a few minutes for the latest results to show.
                 span(v-else) No votes were recorded in this election.
             section.graph(v-else :class='{many: currentResults.results.length > 3}')
                 .result(v-for='result of currentResults.results')

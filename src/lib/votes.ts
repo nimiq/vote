@@ -59,13 +59,14 @@ export function parseVote(
                 }
                 case VoteTypes.ranking: {
                     if (!allUnique(elements)) invalid('Choices must be unique.');
-                    if (elements.length === validChoices.length) {
+                    if (elements.length !== validChoices.length) {
                         invalid(`Requires exactly ${validChoices.length} choices.`);
                     }
-                    if (elements.every((choice) => validChoices.includes(choice))) {
+                    if (!elements.every((choice) => validChoices.includes(choice))) {
                         invalid(`Choices must include all ${validChoices}.`);
                     }
-                    const choices = elements.map((choice, pos) => ({ name: choice, weight: elements.length - pos }));
+                    let factor = 2;
+                    const choices = elements.map((choice) => ({ name: choice, weight: factor /= 2 }));
                     return { name, choices };
                 }
                 default: throw new Error(`Vote type "${config.type}" does not exist`);
