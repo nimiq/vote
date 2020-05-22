@@ -17,7 +17,7 @@
     "start": 985538,
     "end": 993381,
     "label": "Which NIM supply curve do you prefer?",
-    "name": "rank-curve",
+    "name": "rank-curves",
     "type": "ranking",
     "link": "https://www.nimiq.com/blog/nimiq-20-supply-curve-voting/",
     "choices": [{
