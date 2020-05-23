@@ -23,17 +23,13 @@
 
     // currently no voting ////////////////////////////////////////////////////
 
-    .nq-card.voting(v-if='!votingConfig && !currentResults')
+    .nq-card.no.voting(v-if='!votingConfig && !currentResults')
         .nq-card-header
             h1 Hello there!
             p.sub No voting is currently open.
 
         .nq-card-body
-            template(v-if="nextVoting")
-                p(v-if="nextVoting.announcement") {{ nextVoting.announcement }}
-                p(v-if="nextVoting.link || nextVoting.announcementLink")
-                    a.nq-link(:href="`${nextVoting.announcementLink || nextVoting.link}`" target='_blank') Click here for more info.
-            p(v-else) No voting is taking place at this moment.
+            p No voting is taking place at this moment.
             p.
                 To stay up-to-date about votings and Nimiq in general, follow us on
                 #[a.nq-link(href='https://twitter.com/nimiq') Twitter]
@@ -43,6 +39,27 @@
                 #[a.nq-link(href='https://www.nimiq.com/community/') many more social channels].
                 Looking forward to seeing you there!
             p(v-if='pastVotings.length') Loading latest results...
+
+    // upcoming vote ////////////////////////////////////////////////////
+
+    .nq-card.next.voting(v-else-if='!votingConfig && nextVoting')
+        .nq-card-header
+            h1 Preparing for the next voting...
+
+        .nq-card-body
+            p(v-if="nextVoting.announcement") {{ nextVoting.announcement }}
+            p(v-if="nextVoting.link || nextVoting.announcementLink")
+                a.nq-link(:href="`${nextVoting.announcementLink || nextVoting.link}`" target='_blank') Click here for more info.
+            p.content.
+                To stay up-to-date about votings and Nimiq in general, follow us on
+                #[a.nq-link(href='https://twitter.com/nimiq') Twitter]
+                or join us on
+                #[a.nq-link(href='https://t.me/joinchat/AAAAAEJW-ozFwo7Er9jpHw') Telegram]
+                and
+                #[a.nq-link(href='https://www.nimiq.com/community/') many more social channels].
+                Looking forward to seeing you there!
+            p(v-if='pastVotings.length')
+                button.vote-again.nq-button-s(@click="nextVoting = null") See results of previous vote.
 
     // voting /////////////////////////////////////////////////////////////////
 
