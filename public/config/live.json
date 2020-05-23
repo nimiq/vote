@@ -15,5 +15,26 @@
       "name": "no",
       "label": "No"
     }]
-  }]
+    }, {
+      "start": 1112589,
+      "end": 1126992,
+      "label": "Which NIM supply curve do you prefer?",
+      "name": "rank-curves",
+      "type": "ranking",
+      "announcement": "The vote on \"Which NIM supply curve do you prefer?\" will start on Friday May 29, 2020 at approximately 12:00 noon UTC.",
+      "link": "https://www.nimiq.com/blog/nimiq-20-supply-curve-voting/",
+      "choices": [{
+        "name": "green",
+        "label": "Green curve"
+      }, {
+        "name": "red",
+        "label": "Red curve"
+      }, {
+        "name": "blue",
+        "label": "Blue curve"
+      }, {
+        "name": "other",
+        "label": "None of these"
+      }]
+    }]
 }
