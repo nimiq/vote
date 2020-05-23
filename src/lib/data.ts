@@ -80,6 +80,7 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
     const expectedTime = typeof date === 'string' ? Date.parse(date) : date.getTime();
     const deltaBlocks = Math.floor((expectedTime - now) / 60000);
     console.log(expectedTime, deltaBlocks);
-    console.log(`At ${date}, Nimiq should be at block height ${currentHeight + deltaBlocks}.
+    console.log(`At ${date} (${new Date(expectedTime)}), Nimiq should be at block height
+    ${currentHeight + deltaBlocks}.
     That's ${deltaBlocks} blocks from ${currentHeight}.`);
 };
