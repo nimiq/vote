@@ -82,7 +82,8 @@
                     That means the 1st choice gets 1 point, the 2nd 1/2 points, 3rd 1/4 points and 4th 1/8 points.
                     Next, the point values are normalized to a total of 1 and the resulting factor will be multiplied with the NIM in your vote.
                     This way, each NIM represents exactly one vote distributed over your choices.
-                p This poll is open until block {{ '#'+votingConfig.end }}
+                p(v-if="votingAddress") The voting address is#[br]{{ votingAddress }}
+                p This voting is open until block {{ '#'+votingConfig.end }}
                 .note.small ~ {{ timeRemaining }}
 
         .nq-card-body
@@ -144,6 +145,7 @@
                     to {{ '#'+resultsConfig.end }},#[br]
                     approx. {{ blockDate(resultsConfig.start) }}#[br]
                     to {{ blockDate(resultsConfig.end) }}.
+                p(v-if="resultsAddress") The address of this voting is#[br]{{ resultsAddress }}
                 p.
                     In total, {{ currentResults.stats.votes }} votes representing#[br]
                     {{ formatLunaAsNim(currentResults.stats.luna) }} were cast{{ isPreliminary ? ' so far' : '' }}.

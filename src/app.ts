@@ -67,6 +67,7 @@ export default class App extends Vue {
 
     resultHeight: number = 0;
     resultsConfig: Config | null = null; // current results showing
+    resultsAddress: string | null = null; // address of currently showing result
     currentResults: ElectionResults | false | null = null;
     preliminaryResults: ElectionResults | null = null;
     colors: any;
@@ -147,7 +148,8 @@ export default class App extends Vue {
 
 
         // Essential loading completed, update UI and load Nimiq lib in the background
-        console.log('Loading voting app: Parsed config', new Date().getTime() - start, this.choices);
+        console.log('Loading voting app: Parsed config',
+            new Date().getTime() - start, this.choices, this.votingAddress);
         this.loading = false;
         await Vue.nextTick();
 
@@ -427,6 +429,7 @@ export default class App extends Vue {
         if (!config) throw new Error('No on-going voting.');
         this.currentResults = null;
         this.resultsConfig = config;
+        this.resultsAddress = await voteAddress(config, true);
 
         const height = await this.client!.getHeadHeight();
         if (this.resultHeight < height) {
@@ -447,6 +450,7 @@ export default class App extends Vue {
     async showFinalResults(config: Config) {
         this.currentResults = null;
         this.resultsConfig = config;
+        this.resultsAddress = await voteAddress(config, true);
         try {
             this.currentResults = await loadResults(config);
         } catch (e) {
