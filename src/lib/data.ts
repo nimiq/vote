@@ -27,7 +27,7 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
 }
 
 // Use this function to validate your voting configuration.
-(window as any).validateVotingConfig = function validateVotingConfig(config: Config, height: number) {
+(window as any).validateVotingConfig = async function validateVotingConfig(config: Config, height: number) {
     // Basics
     console.assert(config.start < config.end, 'End must be greater than start.');
     console.assert(!!config.name && config.choices.filter((choice) => !choice.name).length === 0, 'no empty names');
@@ -72,6 +72,8 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
         const end = blockDate(config.end, height);
         console.log(`The voting will approximately start at ${start} and end at ${end}.`);
     }
+
+    console.log(`The voting address is\n${await voteAddress(config, true)}`);
 };
 
 // Use this function to validate your voting configuration.
