@@ -131,7 +131,7 @@ export default class App extends Vue {
         }
 
         // Find past votings
-        this.pastVotings = this.configs
+        this.pastVotings = configs
             .filter((config) => config.end <= height)
             .sort((a, b) => b.end - a.end); // latest first
         const [latestVoting] = this.pastVotings;
@@ -141,7 +141,7 @@ export default class App extends Vue {
         }
 
         // Find upcoming votings
-        this.upcomingVotings = this.configs
+        this.upcomingVotings = configs
             .filter((config) => config.start > height)
             .sort((a, b) => a.start - b.start); // closest first
         [this.nextVoting] = this.upcomingVotings;
