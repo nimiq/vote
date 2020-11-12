@@ -42,7 +42,7 @@ export default class App extends Vue {
     testnet = testnet;
     debug = debug;
     dummies = dummies;
-    error: Error | null = null;
+    currentError: Error | null = null;
     configs: Array<Config> = [];
 
     votingConfig: Config | null = null; // current voting
@@ -72,16 +72,16 @@ export default class App extends Vue {
     preliminaryResults: ElectionResults | null = null;
     colors: any;
 
+    error(message: string, reason: Error | string, solution: string = contactInfo) {
+        reason = reason.toString();
+        this.currentError = { message, reason, solution };
+        throw new Error(`${message}: ${reason}`);
+    }
+
     async created() {
         (window as any).app = this;
         const start = new Date().getTime();
         const configName = window.location.hash.replace('#', '');
-        const error = (message: string, reason: Error | string, solution: string = contactInfo) => {
-            reason = reason.toString();
-            this.error = { message, reason, solution };
-            throw new Error(`${message}: ${reason}`);
-        };
-
         // Load config and block height.
         console.log('Loading voting app');
         try {
@@ -90,7 +90,7 @@ export default class App extends Vue {
         } catch (e) {
             if (!this.configs || !this.height) {
                 console.log('Loading voting app: Loading configuration failed', this.configs, this.height, e);
-                error('Something went wrong loading the configuration files.', e,
+                this.error('Something went wrong loading the configuration files.', e,
                     'Are you offline? Adblocker enabled? Maybe have a look and reload.');
             }
         }
@@ -104,12 +104,12 @@ export default class App extends Vue {
         const activeConfigs = configs.filter((config) => config.start <= height && config.end > height);
 
         if (activeConfigs.length > 1) {
-            error('Voting misconfigured.', 'More than one active voting is not permitted.');
+            this.error('Voting misconfigured.', 'More than one active voting is not permitted.');
         }
         if (activeConfigs.length === 1) {
             const [config] = activeConfigs;
             if (config.choices.length < 1) {
-                error('Voting misconfigured.', 'No choices configured.');
+                this.error('Voting misconfigured.', 'No choices configured.');
             }
             for (const choice of config.choices) {
                 choices.push({
@@ -164,7 +164,7 @@ export default class App extends Vue {
             this.client = Nimiq.Client.Configuration.builder().instantiateClient();
         } catch (e) {
             if (!this.client) {
-                error('Something went wrong loading the Nimiq API.', e,
+                this.error('Something went wrong loading the Nimiq API.', e,
                     'Are you offline? Adblocker enabled? Maybe have a look and reload.');
             }
         }
@@ -330,18 +330,22 @@ export default class App extends Vue {
 
         // Get accounts details in parallel for all chunks
         const balancesByAddress = new Map<string, number>();
-        await Promise.all(addressChunk.map(async (chunk) => {
-            const accounts = await client.getAccounts(chunk);
-            accounts.forEach((account, i) => {
-                const address = chunk[i];
-                // Only keep BASIC accounts
-                if (account.type === Nimiq.Account.Type.BASIC) {
-                    balancesByAddress.set(address, account.balance);
-                } else {
-                    balancesByAddress.delete(address);
-                }
-            });
-        }));
+        try {
+            await Promise.all(addressChunk.map(async (chunk) => {
+                const accounts = await client.getAccounts(chunk);
+                accounts.forEach((account, i) => {
+                    const address = chunk[i];
+                    // Only keep BASIC accounts
+                    if (account.type === Nimiq.Account.Type.BASIC) {
+                        balancesByAddress.set(address, account.balance);
+                    } else {
+                        balancesByAddress.delete(address);
+                    }
+                });
+            }));
+        } catch (e) {
+            this.error('Failed to get account balances when counting votes', e, 'Try reloading.');
+        }
 
         // Remove votes from non-basic accounts, it's not allowed to vote with vesting or HTLC contracts
         votes = votes.filter((vote) => balancesByAddress.has(vote.tx.sender));

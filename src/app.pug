@@ -1,8 +1,8 @@
-#app.error(v-if='error')
+#app.error(v-if='currentError')
     h1 Oh oh, an error occured!
-    p.message {{ error.message }}
-    p.solution {{ error.solution }}
-    p.reason {{ error.reason }}
+    p.message {{ currentError.message }}
+    p.solution {{ currentError.solution }}
+    p.reason {{ currentError.reason }}
 #app.loading(v-else-if='loading') loading...
 #app(v-else ref='app')
     .debugging(v-if='debug')
