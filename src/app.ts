@@ -175,6 +175,7 @@ export default class App extends Vue {
         });
         client.addHeadChangedListener(async () => {
             this.height = await client.getHeadHeight();
+            console.log('Head change: current height', this.height);
             if (this.votingConfig?.end === this.height) {
                 // When the vote has just ended, print the results to console
                 const results = await this.showPreliminaryResults();
