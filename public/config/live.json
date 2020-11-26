@@ -36,5 +36,29 @@
         "name": "other",
         "label": "None of these"
       }]
+    }, {
+      "start": 1377201,
+      "end": 1388719,
+      "label": "Community Funding Board Election Q4 2020",
+      "name": "cfb-q4-2020",
+      "type": "ranking",
+      "announcement": "The Q4 2020 Community Funding Board elections will run from Monday, Nov 30 to Monday, Dec 7. To learn more about the candidates, check the link below. The three highest voted candidates will become the next community representatives.",
+      "link": "https://forum.nimiq.community/c/community/organization/11",
+      "choices": [{
+        "name": "f",
+        "label": "FonsL"
+      }, {
+        "name": "a",
+        "label": "Albermonte"
+      }, {
+        "name": "d",
+        "label": "Diese Gute"
+      }, {
+        "name": "m",
+        "label": "Maestro"
+      }, {
+        "name": "g",
+        "label": "Glemiere"
+      }]
     }]
 }

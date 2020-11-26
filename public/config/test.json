@@ -1,3 +1,27 @@
 {
-  "votings": []
+  "votings": [{
+    "start": 1253860,
+    "end": 1259719,
+    "label": "Community funding board election Q4 2020",
+    "name": "cfb-q4-2020",
+    "type": "ranking",
+    "announcement": "Welcome to the Q4 2020 Community funding board elections! To check the bios of the candidates, click the link below. The three highest voted candidates will be members of the community funding board for the next term of approx. six months.",
+    "link": "https://forum.nimiq.community/c/community/organization/11",
+    "choices": [{
+      "name": "f",
+      "label": "FonsL"
+    }, {
+      "name": "a",
+      "label": "Albermonte"
+    }, {
+      "name": "d",
+      "label": "Diese Gute"
+    }, {
+      "name": "m",
+      "label": "Maestro"
+    }, {
+      "name": "g",
+      "label": "Glemiere"
+    }]
+  }]
 }
