@@ -38,7 +38,7 @@
                 and
                 #[a.nq-link(href='https://www.nimiq.com/community/') many more social channels].
                 Looking forward to seeing you there!
-            p(v-if='pastVotings.length') Loading latest results...
+            p(v-if='pastVotings.length') Counting latest results: {{ countingStatus ? countingStatus : 'Initializing' }}...
 
     // upcoming vote ////////////////////////////////////////////////////
 

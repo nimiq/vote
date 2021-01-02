@@ -62,6 +62,7 @@ export default class App extends Vue {
     height = 0;
 
     pastVotings: Array<Config> = [];
+    countingStatus = '';
     upcomingVotings: Array<Config> = [];
     nextVoting: Config | null = null;
 
@@ -302,6 +303,7 @@ export default class App extends Vue {
         const start = new Date().getTime();
 
         // Get all valid votes
+        this.countingStatus = 'Loading all transactions';
         const addresses: string[] = [];
         (await findTxBetween(votingAddress, config.start, end, testnet)).forEach((tx) => {
             console.debug(JSON.stringify(tx, null, ' '));
@@ -322,6 +324,7 @@ export default class App extends Vue {
         });
 
         // Get balances and types of all accounts that voted, use chunking to avoid rate-limit
+        this.countingStatus = 'Loading acounts';
         const addressChunk = [];
         for (let i = 0; i < addresses.length; i += Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT) {
             addressChunk.push(
@@ -356,7 +359,9 @@ export default class App extends Vue {
         console.debug('counting votes: calculate balance', new Date().getTime() - start, addresses, votes);
 
         // Assign balances to votes
-        for (const vote of votes) {
+        for (let index = 0; index < votes.length; index++) {
+            this.countingStatus = `Calculating balances ${index + 1} of ${votes.length}`;
+            const vote = votes[index];
             const { sender } = vote.tx;
             vote.value = balancesByAddress.get(sender)!;
             if (height > config.end) {
@@ -427,6 +432,7 @@ export default class App extends Vue {
 
         console.debug(`Voting log\n\n${log}\n\nResults:`);
         console.debug(JSON.stringify(results, null, ' '));
+        this.countingStatus = '';
         return results;
     }
 
