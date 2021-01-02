@@ -17,20 +17,25 @@ export async function fetchJson(url: string, options?: object): Promise<any> {
     return await (await fetch(url, options)).json() as any;
 }
 
-let watchApiCallsWaiting = 0;
+let watchApiCallsLast = performance.now();
 export async function watchApi(parameters: string, test = false): Promise<any> {
-    watchApiCallsWaiting++;
     return new Promise((resolve, reject) => {
         setTimeout(async () => {
             try {
                 const url = `https://${test ? 'test-' : ''}api.nimiqwatch.com/${parameters}`;
                 const result = await fetchJson(url);
-                watchApiCallsWaiting--;
-                resolve(result);
+                watchApiCallsLast--;
+                console.log('Nimiq.watch API: ', parameters, ' -> result', result);
+                if (result.message?.indexOf('Not allowed, rate-limited') > -1) {
+                    reject(new Error('Nimiq.watch API rate-limit reached. Try again later.'));
+                } else {
+                    resolve(result);
+                }
             } catch (e) {
                 reject(e);
             }
-        }, (watchApiCallsWaiting - 1) * 200); // five requests per second
+        }, Math.min(performance.now() - watchApiCallsLast, 500)); // two requests per second, avoid rate limit
+        watchApiCallsLast = performance.now();
     });
 }
 
