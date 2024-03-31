@@ -2,7 +2,7 @@ import { dummies, configAddress, resultsLocation } from './const';
 import { fetchJson } from './network';
 import { ElectionResults, Config, VoteTypes } from './types';
 import { dummyConfig, dummyResult } from './dummies';
-import { voteAddress, ELEMENT_SEPARATOR, WEIGHT_SEPARATOR, serializeVote } from './votes';
+import { voteAddresses, ELEMENT_SEPARATOR, WEIGHT_SEPARATOR, serializeVote } from './votes';
 import { allUnique, blockDate } from './util';
 
 async function _load(url: string): Promise<Array<Config>> {
@@ -22,7 +22,7 @@ export async function loadConfig(): Promise<Array<Config>> {
 
 export async function loadResults(config: Config): Promise<ElectionResults> {
     return !dummies
-        ? fetchJson(`${resultsLocation}${await voteAddress(config, false)}.json`)
+        ? fetchJson(`${resultsLocation}${(await voteAddresses(config, false))[0]}.json`)
         : dummyResult;
 }
 
@@ -73,7 +73,7 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
         console.log(`The voting will approximately start at ${start} and end at ${end}.`);
     }
 
-    console.log(`The voting address is\n${await voteAddress(config, true)}`);
+    console.log(`The voting addresses are\n${(await voteAddresses(config, true)).join('\n')}`);
 };
 
 // Use this function to validate your voting configuration.

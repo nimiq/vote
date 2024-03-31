@@ -55,13 +55,16 @@ export async function watchApiGetAllUntil(
 }
 
 export async function findTxBetween(
-    address: string, minHeight: number, maxHeight: number, testnet = false,
+    addresses: string[], minHeight: number, maxHeight: number, testnet = false,
 ): Promise<Tx[]> {
     // [{"timestamp":<unix timestamp>,"block_height":0,"hash":"<hex>","sender_address":"<HRA>",
     //   "receiver_address":"<HRA>","value":<luna>,"fee":<luna>,"data":"<base64 encoded>","confirmations":0}, ...]
-    const txs = await watchApiGetAllUntil(`account-transactions/${address}`, testnet, (results, page) =>
-        results.length < page || Math.min(...results.map((r) => r.block_height)) < minHeight, // done
-    );
+    const txs = await Promise.all(addresses.map(async (addr) => watchApiGetAllUntil(
+        `account-transactions/${addr}`,
+        testnet,
+        (results, page) =>
+            results.length < page || Math.min(...results.map((r) => r.block_height)) < minHeight, // done
+    ))).then((txss) => txss.flat());
     return txs
         .sort((a, b) => b.block_height - a.block_height) // newest/highest first
         .filter((tx) => tx.block_height >= minHeight && tx.block_height <= maxHeight) // in voting period

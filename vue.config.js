@@ -3,6 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const CORE_VERSION = require('@nimiq/core-web/package.json').version;
 
+// Fix build for Node version with OpenSSL 3
+const crypto = require('crypto');
+const origCreateHash = crypto.createHash;
+crypto.createHash = (alg, opts) => {
+    return origCreateHash(alg === 'md4' ? 'md5' : alg, opts);
+};
+
 const BROWSER_WARNING = fs.readFileSync(
     path.join(__dirname, '/node_modules/@nimiq/browser-warning/dist/browser-warning.html.template'));
 
