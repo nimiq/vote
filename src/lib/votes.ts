@@ -125,12 +125,22 @@ async function configHash(config: Config): Promise<ArrayBuffer> {
     return crypto.digest('SHA-256', data);
 }
 
-export async function voteAddress(config: Config, spaces = true): Promise<string> {
+export async function voteAddresses(config: Config, spaces = true): Promise<string[]> {
     const hash = await configHash(config);
     const base32 = toBase32(new Uint8Array(hash));
     const digits = `V0TE${base32.slice(0, 28)}`;
     // eslint-disable-next-line prefer-template
     const check = ('00' + (98 - ibanCheck(digits + CCODE + '00'))).slice(-2);
     const address = CCODE + check + digits;
-    return spaces ? address.replace(/.{4}/g, '$& ').trim() : address;
+
+    const addresses = [address];
+
+    // During the supply curve vote for PoS in March-April 2024, the endblock was changed during the vote,
+    // which changed the voting address (which is calculated from the config). This adds the previous address
+    // to the list of voting addresses.
+    if (address === 'NQ18V0TELUV9YHL0U6EG6NH9BLT3L8DMBX0K') { // New voting address
+        addresses.push('NQ94V0TEF1NR5VLGKPQTEADJ8MSCLRVQNKKY'); // Previous voting address
+    }
+
+    return spaces ? addresses.map((addr) => addr.replace(/.{4}/g, '$& ').trim()) : addresses;
 }

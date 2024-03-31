@@ -9,7 +9,7 @@ import { Tooltip, InfoCircleSmallIcon, CloseIcon } from '@nimiq/vue-components';
 import { BaseVote, VoteTypes, BaseChoice, Config, Option, ElectionResults, CastVote, ElectionVote, ElectionStats,
     ElectionResult } from './lib/types';
 import { loadNimiqCoreOnly, loadNimiqWithCryptography } from './lib/CoreLoader';
-import { serializeVote, parseVote, voteTotalWeight, voteAddress } from './lib/votes';
+import { serializeVote, parseVote, voteTotalWeight, voteAddresses } from './lib/votes';
 import { loadConfig, loadResults } from './lib/data';
 import { findTxBetween, watchApi, blockRewardsSince } from './lib/network';
 import { testnet, debug, dummies, contactInfo } from './lib/const';
@@ -47,6 +47,7 @@ export default class App extends Vue {
 
     votingConfig: Config | null = null; // current voting
     votingAddress: string | null = null; // address to vote to
+    votingAddresses: string[] | null = null; // addresses to check for votes
     private hub: HubApi = new HubApi(testnet ? 'https://hub.nimiq-testnet.com' : 'https://hub.nimiq.com');
     // vote: Receipt | null = localStorage.vote ? JSON.parse(localStorage.vote) : null;
     vote: CastVote | null = localStorage.vote ? JSON.parse(localStorage.vote) : null;
@@ -68,7 +69,7 @@ export default class App extends Vue {
 
     resultHeight: number = 0;
     resultsConfig: Config | null = null; // current results showing
-    resultsAddress: string | null = null; // address of currently showing result
+    resultsAddresses: string[] | null = null; // addresses of currently showing result
     currentResults: ElectionResults | false | null = null;
     preliminaryResults: ElectionResults | null = null;
     colors: any;
@@ -128,7 +129,8 @@ export default class App extends Vue {
 
             // config for current voting loaded
             this.votingConfig = config;
-            this.votingAddress = await voteAddress(this.votingConfig, true);
+            this.votingAddresses = await voteAddresses(this.votingConfig, true);
+            [this.votingAddress] = this.votingAddresses;
         }
 
         // Find past votings
@@ -150,7 +152,7 @@ export default class App extends Vue {
 
         // Essential loading completed, update UI and load Nimiq lib in the background
         console.log('Loading voting app: Parsed config',
-            new Date().getTime() - start, this.choices, this.votingAddress);
+            new Date().getTime() - start, this.choices, this.votingAddresses);
         this.loading = false;
         await Vue.nextTick();
 
@@ -292,10 +294,10 @@ export default class App extends Vue {
         const client = this.client!;
         const height = await client.getHeadHeight();
         const end = Math.min(config.end, height);
-        const votingAddress = await voteAddress(config, false);
+        const votingAddresses = await voteAddresses(config, false);
         const stats: ElectionStats = { votes: 0, luna: 0 };
         let votes: CastVote<BaseVote>[] = [];
-        let log = `Address: ${votingAddress}\nStart: ${config.start}\nEnd: ${config.end}\nHeight: ${height}\n\n`;
+        let log = `Addresses: ${votingAddresses}\nStart: ${config.start}\nEnd: ${config.end}\nHeight: ${height}\n\n`;
 
         await Vue.nextTick();
 
@@ -305,7 +307,7 @@ export default class App extends Vue {
         // Get all valid votes
         this.countingStatus = 'Loading all transactions';
         const addresses: string[] = [];
-        (await findTxBetween(votingAddress, config.start, end, testnet)).forEach((tx) => {
+        (await findTxBetween(votingAddresses, config.start, end, testnet)).forEach((tx) => {
             console.debug(JSON.stringify(tx, null, ' '));
             if (addresses.includes(tx.sender)) return; // only last vote countes
             try {
@@ -369,7 +371,7 @@ export default class App extends Vue {
                 // at the end of the vote by tanking transactions and block rewards since then into account.
 
                 // Get all transaction since the end of the vote, substract incoming and add outgoing
-                (await findTxBetween(sender, end, height, testnet)).forEach((tx) => {
+                (await findTxBetween([sender], end, height, testnet)).forEach((tx) => {
                     // Subtract all NIM that the address received after the vote ended
                     if (tx.recipient === sender) vote.value -= tx.value;
                     // Add all NIM that the address sent after the vote ended
@@ -440,7 +442,7 @@ export default class App extends Vue {
         if (!config) throw new Error('No on-going voting.');
         this.currentResults = null;
         this.resultsConfig = config;
-        this.resultsAddress = await voteAddress(config, true);
+        this.resultsAddresses = await voteAddresses(config, true);
 
         const height = await this.client!.getHeadHeight();
         if (this.resultHeight < height) {
@@ -461,7 +463,7 @@ export default class App extends Vue {
     async showFinalResults(config: Config) {
         this.currentResults = null;
         this.resultsConfig = config;
-        this.resultsAddress = await voteAddress(config, true);
+        this.resultsAddresses = await voteAddresses(config, true);
         try {
             this.currentResults = await loadResults(config);
         } catch (e) {
