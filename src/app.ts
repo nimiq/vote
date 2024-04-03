@@ -566,7 +566,8 @@ export default class App extends Vue {
             minute: 'numeric',
             timeZone: 'UTC',
             timeZoneName: 'short',
-            hour12: false,
+            // @ts-ignore Only added in TypeScript 4.2
+            hourCycle: "h23",
         });
     }
 
