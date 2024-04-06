@@ -133,14 +133,12 @@ export async function voteAddresses(config: Config, spaces = true): Promise<stri
     const check = ('00' + (98 - ibanCheck(digits + CCODE + '00'))).slice(-2);
     const address = CCODE + check + digits;
 
-    const addresses = [address];
-
     // During the supply curve vote for PoS in March-April 2024, the endblock was changed during the vote,
-    // which changed the voting address (which is calculated from the config). This adds the previous address
-    // to the list of voting addresses.
-    if (address === 'NQ18V0TELUV9YHL0U6EG6NH9BLT3L8DMBX0K') { // New voting address
-        addresses.push('NQ94V0TEF1NR5VLGKPQTEADJ8MSCLRVQNKKY'); // Previous voting address
-    }
+    // which changed the voting address (which is calculated from the config). This hardcodes the addresses
+    // used for that voting process.
+    const addresses = (config.name === 'rank-curves-2')
+        ? ['NQ18V0TELUV9YHL0U6EG6NH9BLT3L8DMBX0K', 'NQ94V0TEF1NR5VLGKPQTEADJ8MSCLRVQNKKY'] : [address];
+
 
     return spaces ? addresses.map((addr) => addr.replace(/.{4}/g, '$& ').trim()) : addresses;
 }
