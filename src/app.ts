@@ -88,7 +88,7 @@ export default class App extends Vue {
         console.log('Loading voting app');
         try {
             this.configs = await loadConfig();
-            this.height = (await watchApi('latest/1', testnet))[0].height;
+            this.height = (await watchApi('api/v1/latest/1', testnet))[0].height;
         } catch (e) {
             if (!this.configs || !this.height) {
                 console.log('Loading voting app: Loading configuration failed', this.configs, this.height, e);
@@ -368,7 +368,7 @@ export default class App extends Vue {
             vote.value = balancesByAddress.get(sender)!;
             if (height > config.end) {
                 // After the vote ended, a balance can change. Therefore, we compute the balance of each address
-                // at the end of the vote by tanking transactions and block rewards since then into account.
+                // at the end of the vote by taking transactions and block rewards since then into account.
 
                 // Get all transaction since the end of the vote, substract incoming and add outgoing
                 (await findTxBetween([sender], end, height, testnet)).forEach((tx) => {

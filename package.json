@@ -1,5 +1,5 @@
 {
-  "name": "nimiq-app-starter-kit",
+  "name": "nimiq-voting-app",
   "version": "0.1.0",
   "scripts": {
     "serve": "vue-cli-service serve",

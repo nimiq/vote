@@ -24,7 +24,7 @@ let nimiqCryptographyPromise: Promise<Nimiq> | null = null;
  * not sync the blockchain but only want to use blockchain primitives.
  */
 export async function loadNimiqCoreOnly(): Promise<Nimiq> {
-    nimiqCorePromise = nimiqCorePromise || new Promise((resolve, reject) => {
+    nimiqCorePromise = nimiqCorePromise || new Promise<void>((resolve, reject) => {
         const $head = document.getElementsByTagName('head')[0];
         const $script = document.createElement('script');
         const url = `${coreBasePath}${coreVariant}.js`;

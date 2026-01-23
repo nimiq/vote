@@ -34,7 +34,7 @@ export async function watchApi(parameters: string, test = false): Promise<any> {
             } catch (e) {
                 reject(e);
             }
-        }, Math.min(performance.now() - watchApiCallsLast, 500)); // two requests per second, avoid rate limit
+        }, Math.min(performance.now() - watchApiCallsLast, 10)); // 100 requests per second, avoid rate limit
         watchApiCallsLast = performance.now();
     });
 }
@@ -60,7 +60,7 @@ export async function findTxBetween(
     // [{"timestamp":<unix timestamp>,"block_height":0,"hash":"<hex>","sender_address":"<HRA>",
     //   "receiver_address":"<HRA>","value":<luna>,"fee":<luna>,"data":"<base64 encoded>","confirmations":0}, ...]
     const txs = await Promise.all(addresses.map(async (addr) => watchApiGetAllUntil(
-        `account-transactions/${addr}`,
+        `api/v1/account-transactions/${addr}`,
         testnet,
         (results, page) =>
             results.length < page || Math.min(...results.map((r) => r.block_height)) < minHeight, // done
