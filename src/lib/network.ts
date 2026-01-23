@@ -8,9 +8,8 @@ export type Tx = {
     height: number,
 }
 
-export type Block = {
+export type Inherent = {
     reward: number,
-    fees: number,
 }
 
 export async function fetchJson(url: string, options?: object): Promise<any> {
@@ -54,6 +53,21 @@ export async function watchApiGetAllUntil(
     return json;
 }
 
+export async function watchApiV2GetAllUntil(
+    parameters: string,
+    testnet = false,
+    stop = (results: any[], pageSize: number) => results.length < pageSize,
+): Promise<any[]> {
+    const limit = 1000;
+    const json: any[] = [];
+    for (let offset = 0; ; offset += limit) {
+        const rows = ((await watchApi(`${parameters}?limit=${limit}&offset=${offset}`, testnet)) as any[]);
+        json.push(...rows);
+        if (stop(rows, limit)) break;
+    }
+    return json;
+}
+
 export async function findTxBetween(
     addresses: string[], minHeight: number, maxHeight: number, testnet = false,
 ): Promise<Tx[]> {
@@ -79,14 +93,13 @@ export async function findTxBetween(
         }));
 }
 
-export async function blockRewardsSince(address: string, startHeight: number, testnet: boolean): Promise<Block[]> {
+export async function rewardsSince(address: string, startHeight: number, testnet: boolean): Promise<Inherent[]> {
     // {"height":0,"timestamp":<unix timestamp>,"hash":"...","fees":276,"reward":<luna>},
-    return (await watchApiGetAllUntil(`account-blocks/${address}`, testnet, (results, page) =>
-        results.length < page || Math.min(...results.map((r) => r.height)) < startHeight, // done
+    return (await watchApiV2GetAllUntil(`api/v2/validator/${address}/rewards`, testnet, (results, limit) =>
+        results.length < limit || Math.min(...results.map((r) => r.block.height)) < startHeight, // done
     ))
-        .filter((block) => block.height > startHeight)
-        .map((block) => ({
-            reward: block.reward,
-            fees: block.fees,
+        .filter((inherent) => inherent.block.height > startHeight)
+        .map((inherent) => ({
+            reward: inherent.value,
         }));
 }

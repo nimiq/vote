@@ -11,7 +11,7 @@ import { BaseVote, VoteTypes, BaseChoice, Config, Option, ElectionResults, CastV
 import { loadNimiqCoreOnly, loadNimiqWithCryptography } from './lib/CoreLoader';
 import { serializeVote, parseVote, voteTotalWeight, voteAddresses } from './lib/votes';
 import { loadConfig, loadResults } from './lib/data';
-import { findTxBetween, watchApi, blockRewardsSince } from './lib/network';
+import { findTxBetween, watchApi, rewardsSince } from './lib/network';
 import { testnet, debug, dummies, contactInfo } from './lib/const';
 import { blockDate } from './lib/util';
 
@@ -379,8 +379,8 @@ export default class App extends Vue {
                 });
 
                 // substract any NIM that were mined in the meantime
-                (await blockRewardsSince(sender, end, testnet)).forEach((block) => {
-                    vote.value -= block.reward + block.fees;
+                (await rewardsSince(sender, end, testnet)).forEach((block) => {
+                    vote.value -= block.reward;
                 });
             }
         }
