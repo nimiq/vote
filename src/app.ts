@@ -290,7 +290,15 @@ export default class App extends Vue {
 
         await this.$nextTick();
         try {
-            this.vote.value = (await this.client?.getAccount(sender))!.balance;
+            const [account, staker] = await Promise.all([
+                this.client?.getAccount(sender),
+                this.client?.getStaker(sender),
+            ]);
+
+            const accountBalance = account?.balance || 0;
+            const stakerBalance = staker ? staker.balance + staker.inactiveBalance + staker.retiredBalance : 0;
+
+            this.vote.value = accountBalance + stakerBalance;
         } catch { /* not a problem if we miss the account balance */ }
         localStorage.vote = JSON.stringify(this.vote);
     }
@@ -353,6 +361,23 @@ export default class App extends Vue {
                         balancesByAddress.set(address, account.balance);
                     } else {
                         balancesByAddress.delete(address);
+                    }
+                });
+            }));
+        } catch (e) {
+            this.error('Failed to get account balances when counting votes', e, 'Try reloading.');
+        }
+        try {
+            await Promise.all(addressChunk.map(async (chunk) => {
+                const stakers = await client.getStakers(chunk);
+                stakers.forEach((staker, i) => {
+                    if (!staker) return;
+
+                    const address = chunk[i];
+                    // Only update accounts that have not been filtered out already
+                    const balance = balancesByAddress.get(address);
+                    if (balance !== undefined) {
+                        balancesByAddress.set(address, balance + staker.balance + staker.inactiveBalance + staker.retiredBalance);
                     }
                 });
             }));
