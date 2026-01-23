@@ -1,4 +1,8 @@
-export type Nimiq = typeof import('@nimiq/core-web');
+declare global {
+    interface Window {
+        Nimiq: typeof import('@nimiq/core');
+    }
+}
 
 // Votes
 export enum VoteTypes {

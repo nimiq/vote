@@ -1,7 +1,6 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const fs = require('fs');
 const path = require('path');
-const CORE_VERSION = require('@nimiq/core-web/package.json').version;
 
 // Fix build for Node version with OpenSSL 3
 const crypto = require('crypto');
@@ -18,6 +17,7 @@ const configureWebpack = {
         new CopyWebpackPlugin([
             { from: 'node_modules/@nimiq/vue-components/dist/img/iqons.min*.svg', to: 'img/iqons.min.svg' },
             { from: 'node_modules/@nimiq/browser-warning/dist', to: './' },
+            { from: 'node_modules/@nimiq/core', to: 'nimiq' },
         ]),
     ],
 };
@@ -27,7 +27,6 @@ const chainWebpack = (config) => {
     config
         .plugin('html')
         .tap((args) => {
-            args[0].CORE_VERSION = CORE_VERSION;
             args[0].BROWSER_WARNING = BROWSER_WARNING;
             return args;
         });

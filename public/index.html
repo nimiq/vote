@@ -19,6 +19,15 @@
         });
     </script>
     <script type="text/javascript" src="<%= BASE_URL %>browser-warning.js"></script>
+    <script type="module">
+        import * as Nimiq from '<%= BASE_URL %>nimiq/web/index.js';
+        Nimiq.default().then(() => {
+            console.log('Nimiq initialized');
+            window.Nimiq = Nimiq;
+        }).catch((e) => {
+            console.error('Error initializing Nimiq:', e);
+        });
+    </script>
 </head>
 <body class="nimiq-style">
     <div id="testnet-warning" class="nq-gold-bg" style="display: none">

@@ -8,7 +8,6 @@ import { Tooltip, InfoCircleSmallIcon, CloseIcon } from '@nimiq/vue-components';
 
 import { BaseVote, VoteTypes, BaseChoice, Config, Option, ElectionResults, CastVote, ElectionVote, ElectionStats,
     ElectionResult } from './lib/types';
-import { loadNimiqCoreOnly, loadNimiqWithCryptography } from './lib/CoreLoader';
 import { serializeVote, parseVote, voteTotalWeight, voteAddresses } from './lib/votes';
 import { loadConfig, loadResults } from './lib/data';
 import { findTxBetween, watchApi, rewardsSince } from './lib/network';
@@ -32,6 +31,9 @@ type Error = {
     solution: string,
     reason: string,
 }
+
+type NimiqClient = import('@nimiq/core').Client;
+const { Nimiq } = window;
 
 const appLogo = `${window.location.origin}/android-icon-192x192.png`;
 const maxVotesInGraph = 10;
@@ -58,7 +60,7 @@ export default class App extends Vue {
     singleChoice: string = '';
     multipleChoices: string[] = [];
 
-    client?: Nimiq.Client;
+    client?: NimiqClient;
     consensus = false;
     height = 0;
 
@@ -157,14 +159,18 @@ export default class App extends Vue {
         await Vue.nextTick();
 
         try {
-            const Nimiq = await loadNimiqCoreOnly();
-            await loadNimiqWithCryptography(!testnet);
-
             // Initialize Nimiq
-            if (!(Nimiq.GenesisConfig as any)._config) {
-                if (testnet) Nimiq.GenesisConfig.test(); else Nimiq.GenesisConfig.main();
+            const config = new Nimiq.ClientConfiguration();
+            if (testnet) {
+                config.network('TestAlbatross');
+                config.seedNodes([
+                    '/dns4/seed1.pos.nimiq-testnet.com/tcp/8443/wss',
+                    '/dns4/seed2.pos.nimiq-testnet.com/tcp/8443/wss',
+                    '/dns4/seed3.pos.nimiq-testnet.com/tcp/8443/wss',
+                    '/dns4/seed4.pos.nimiq-testnet.com/tcp/8443/wss',
+                ]);
             }
-            this.client = Nimiq.Client.Configuration.builder().instantiateClient();
+            this.client = await Nimiq.Client.create(config.build());
         } catch (e) {
             if (!this.client) {
                 this.error('Something went wrong loading the Nimiq API.', e,
@@ -174,11 +180,11 @@ export default class App extends Vue {
 
         const client = this.client!;
         client.addConsensusChangedListener((state) => {
-            this.consensus = state === Nimiq.Client.ConsensusState.ESTABLISHED;
+            this.consensus = state === 'established';
         });
         client.addHeadChangedListener(async () => {
             this.height = await client.getHeadHeight();
-            console.log('Head change: current height', this.height);
+            console.debug('Head change: current height', this.height);
             if (this.votingConfig?.end === this.height) {
                 // When the vote has just ended, print the results to console
                 const results = await this.showPreliminaryResults();
@@ -269,7 +275,7 @@ export default class App extends Vue {
             disableDisclaimer: true,
         });
 
-        if (signedTransaction.raw.senderType !== Nimiq.Account.Type.BASIC) {
+        if (signedTransaction.raw.senderType !== Nimiq.AccountType.Basic) {
             throw new Error('You can only vote with basic accounts. Vesting and HTLC contracts are not allowed.');
         }
 
@@ -328,9 +334,10 @@ export default class App extends Vue {
         // Get balances and types of all accounts that voted, use chunking to avoid rate-limit
         this.countingStatus = 'Loading acounts';
         const addressChunk = [];
-        for (let i = 0; i < addresses.length; i += Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT) {
+        // Request a maximum of 255 addresses at once (`RequestTrieProof::MAX_KEYS`)
+        for (let i = 0; i < addresses.length; i += 255) {
             addressChunk.push(
-                addresses.slice(i, i + Nimiq.GetAccountsProofMessage.ADDRESSES_MAX_COUNT),
+                addresses.slice(i, i + 255),
             );
         }
 
@@ -342,7 +349,7 @@ export default class App extends Vue {
                 accounts.forEach((account, i) => {
                     const address = chunk[i];
                     // Only keep BASIC accounts
-                    if (account.type === Nimiq.Account.Type.BASIC) {
+                    if (account.type === 'basic') {
                         balancesByAddress.set(address, account.balance);
                     } else {
                         balancesByAddress.delete(address);
