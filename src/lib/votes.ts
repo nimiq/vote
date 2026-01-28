@@ -137,7 +137,11 @@ export async function voteAddresses(config: Config, spaces = true): Promise<stri
     // which changed the voting address (which is calculated from the config). This hardcodes the addresses
     // used for that voting process.
     const addresses = (config.name === 'rank-curves-2')
-        ? ['NQ18V0TELUV9YHL0U6EG6NH9BLT3L8DMBX0K', 'NQ94V0TEF1NR5VLGKPQTEADJ8MSCLRVQNKKY'] : [address];
+        ? [
+            'NQ18V0TELUV9YHL0U6EG6NH9BLT3L8DMBX0K', // reconfigured address
+            'NQ94V0TEF1NR5VLGKPQTEADJ8MSCLRVQNKKY', // original address
+        ]
+        : [address];
 
 
     return spaces ? addresses.map((addr) => addr.replace(/.{4}/g, '$& ').trim()) : addresses;

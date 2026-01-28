@@ -43,12 +43,12 @@ export async function watchApiGetAllUntil(
     testnet = false,
     stop = (results: any[], pageSize: number) => results.length < pageSize,
 ): Promise<any[]> {
-    const page = 50; // max page size for nimiq.watch API
+    const limit = 100; // max page size for nimiq.watch API
     const json: any[] = [];
-    for (let skip = 0; ; skip += page) {
-        const rows = ((await watchApi(`${parameters}/${page}/${skip}`, testnet)) as any[]);
+    for (let skip = 0; ; skip += limit) {
+        const rows = ((await watchApi(`${parameters}/${limit}/${skip}`, testnet)) as any[]);
         json.push(...rows);
-        if (stop(rows, page)) break;
+        if (stop(rows, limit)) break;
     }
     return json;
 }
@@ -88,7 +88,7 @@ export async function findTxBetween(
             recipient: tx.receiver_address,
             value: tx.value,
             fee: tx.fee,
-            data: atob(tx.data),
+            data: window.Nimiq.BufferUtils.toUtf8(window.Nimiq.BufferUtils.fromHex(tx.data)),
             height: tx.block_height,
         }));
 }

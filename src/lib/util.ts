@@ -11,5 +11,5 @@ export function allUnique <T>(array: T[], compare: (a: T, b: T) => boolean = ide
 
 export function blockDate(height: number, currentHeight: number): Date {
     const now = new Date().getTime();
-    return new Date(now + (height - currentHeight) * 60000);
+    return new Date(now + (height - currentHeight) * 1000);
 }

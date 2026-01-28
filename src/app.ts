@@ -33,7 +33,7 @@ type Error = {
 }
 
 type NimiqClient = import('@nimiq/core').Client;
-const { Nimiq } = window;
+let Nimiq: typeof import('@nimiq/core');
 
 const appLogo = `${window.location.origin}/android-icon-192x192.png`;
 const maxVotesInGraph = 10;
@@ -160,6 +160,19 @@ export default class App extends Vue {
 
         try {
             // Initialize Nimiq
+            await new Promise<void>((resolve) => {
+                let timeout: number | undefined;
+                function checkNimiq() {
+                    if (window.Nimiq) {
+                        window.clearTimeout(timeout);
+                        Nimiq = window.Nimiq;
+                        resolve();
+                    } else {
+                        timeout = window.setTimeout(checkNimiq, 10);
+                    }
+                }
+                checkNimiq();
+            });
             const config = new Nimiq.ClientConfiguration();
             if (testnet) {
                 config.network('TestAlbatross');
