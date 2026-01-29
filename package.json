@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "dev": "vite",
+    "typecheck": "vue-tsc --noEmit",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
