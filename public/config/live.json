@@ -60,5 +60,23 @@
         "name": "g",
         "label": "Glemiere"
       }]
+    }, {
+      "start": 41572064,
+      "end": 41658464,
+      "label": "Will the sun shine tomorrow? (Test vote)",
+      "name": "wtsst-test-01-2026",
+      "type": "singleChoice",
+      "announcement": "Testing voting tool in 2026. Will the sun shine tomorrow? Cast your vote now!",
+      "link": "https://www.wetter.com",
+      "choices": [{
+        "name": "y",
+        "label": "Yes"
+      }, {
+        "name": "n",
+        "label": "No"
+      }, {
+        "name": "c",
+        "label": "Cloudy with a chance of meatballs"
+      }]
     }]
 }
