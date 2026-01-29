@@ -537,10 +537,10 @@ export default class App extends Vue {
     }
 
     get timeRemaining(): string {
-        const blocks = this.votingConfig!.end - this.height;
-        const days = Math.floor(blocks / (24 * 60));
-        const hours = Math.floor((blocks - days * 24 * 60) / 60);
-        const minutes = blocks - (days * 24 + hours) * 60;
+        const seconds = this.votingConfig!.end - this.height;
+        const days = Math.floor(seconds / (24 * 60 * 60));
+        const hours = Math.floor((seconds - days * 24 * 60 * 60) / (60 * 60));
+        const minutes = Math.floor((seconds - (days * 24 * 60 * 60 + hours * 60 * 60)) / 60);
         return days === 0 && hours === 0
             ? `${minutes} minutes`
             : days === 0

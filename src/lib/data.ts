@@ -80,7 +80,7 @@ export async function loadResults(config: Config): Promise<ElectionResults> {
 (window as any).expectedBlockHeight = function expectedBlockHeight(date: Date | string, currentHeight: number) {
     const now = new Date().getTime();
     const expectedTime = typeof date === 'string' ? Date.parse(date) : date.getTime();
-    const deltaBlocks = Math.floor((expectedTime - now) / 60000);
+    const deltaBlocks = Math.floor((expectedTime - now) / 1000);
     console.log(expectedTime, deltaBlocks);
     console.log(`At ${date} (${new Date(expectedTime)}), Nimiq should be at block height
     ${currentHeight + deltaBlocks}.
