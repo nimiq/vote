@@ -1,9 +1,10 @@
-import { dummies, configAddress, resultsLocation } from './const';
-import { fetchJson } from './network';
-import { ElectionResults, Config, VoteTypes } from './types';
+import type { Config, ElectionResults } from './types';
+import { configAddress, dummies, resultsLocation } from './const';
 import { dummyConfig, dummyResult } from './dummies';
-import { voteAddresses, ELEMENT_SEPARATOR, WEIGHT_SEPARATOR, serializeVote } from './votes';
+import { fetchJson } from './network';
+import { VoteTypes } from './types';
 import { allUnique, blockDate } from './util';
+import { ELEMENT_SEPARATOR, serializeVote, voteAddresses, WEIGHT_SEPARATOR } from './votes';
 
 async function _load(url: string): Promise<Array<Config>> {
     try {

@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 // from https://github.com/nimiq/core-js/blob/3e6cb39625a278dcd9f4406b9ed5dff55b17b36d
 //      /src/main/generic/consensus/base/account/Address.js#L139
 export function ibanCheck(str: string): number {
@@ -10,28 +8,33 @@ export function ibanCheck(str: string): number {
     let tmp = '';
 
     for (let i = 0; i < Math.ceil(num.length / 6); i++) {
-        tmp = (parseInt(tmp + num.substr(i * 6, 6), 10) % 97).toString();
+        tmp = (Number.parseInt(tmp + num.substr(i * 6, 6), 10) % 97).toString();
     }
 
-    return parseInt(tmp, 10);
+    return Number.parseInt(tmp, 10);
 }
 
 // from https://github.com/nimiq/core-js/blob/23d4ef127dafef00ba2c48d6c4c54ae9a59ffc35
 //      /src/main/generic/utils/buffer/BufferUtils.js#L143
 const alphabet = '0123456789ABCDEFGHJKLMNPQRSTUVXY';
-export function toBase32(buffer: ArrayBuffer): string {
-    let shift = 3, carry = 0, byte, symbol, i, res = '';
+export function toBase32(buffer: Uint8Array): string {
+    let shift = 3;
+    let carry = 0;
+    let byte;
+    let symbol;
+    let i;
+    let res = '';
     const buf = new Uint8Array(buffer);
 
     for (i = 0; i < buf.length; i++) {
         byte = buf[i];
         symbol = carry | (byte >> shift);
-        res += alphabet[symbol & 0x1f];
+        res += alphabet[symbol & 0x1F];
 
         if (shift > 5) {
             shift -= 5;
             symbol = byte >> shift;
-            res += alphabet[symbol & 0x1f];
+            res += alphabet[symbol & 0x1F];
         }
 
         shift = 5 - shift;
@@ -40,7 +43,7 @@ export function toBase32(buffer: ArrayBuffer): string {
     }
 
     if (shift !== 3) {
-        res += alphabet[carry & 0x1f];
+        res += alphabet[carry & 0x1F];
     }
 
     while (res.length % 8 !== 0 && alphabet.length === 33) {

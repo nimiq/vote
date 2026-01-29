@@ -1,3 +1,5 @@
+import * as Nimiq from '@nimiq/core';
+
 export type Tx = {
     hash: string,
     sender: string,
@@ -6,11 +8,11 @@ export type Tx = {
     fee: number,
     data: string,
     height: number,
-}
+};
 
 export type Inherent = {
     reward: number,
-}
+};
 
 export async function fetchJson(url: string, options?: object): Promise<any> {
     return await (await fetch(url, options)).json() as any;
@@ -46,9 +48,10 @@ export async function watchApiGetAllUntil(
     const limit = 100; // max page size for nimiq.watch API
     const json: any[] = [];
     for (let skip = 0; ; skip += limit) {
-        const rows = ((await watchApi(`${parameters}/${limit}/${skip}`, testnet)) as any[]);
+        const rows = (await watchApi(`${parameters}/${limit}/${skip}`, testnet)) as any[];
         json.push(...rows);
-        if (stop(rows, limit)) break;
+        if (stop(rows, limit))
+            break;
     }
     return json;
 }
@@ -61,15 +64,19 @@ export async function watchApiV2GetAllUntil(
     const limit = 1000;
     const json: any[] = [];
     for (let offset = 0; ; offset += limit) {
-        const rows = ((await watchApi(`${parameters}?limit=${limit}&offset=${offset}`, testnet)) as any[]);
+        const rows = (await watchApi(`${parameters}?limit=${limit}&offset=${offset}`, testnet)) as any[];
         json.push(...rows);
-        if (stop(rows, limit)) break;
+        if (stop(rows, limit))
+            break;
     }
     return json;
 }
 
 export async function findTxBetween(
-    addresses: string[], minHeight: number, maxHeight: number, testnet = false,
+    addresses: string[],
+    minHeight: number,
+    maxHeight: number,
+    testnet = false,
 ): Promise<Tx[]> {
     // [{"timestamp":<unix timestamp>,"block_height":0,"hash":"<hex>","sender_address":"<HRA>",
     //   "receiver_address":"<HRA>","value":<luna>,"fee":<luna>,"data":"<base64 encoded>","confirmations":0}, ...]
@@ -88,7 +95,7 @@ export async function findTxBetween(
             recipient: tx.receiver_address,
             value: tx.value,
             fee: tx.fee,
-            data: window.Nimiq.BufferUtils.toUtf8(window.Nimiq.BufferUtils.fromHex(tx.data)),
+            data: Nimiq.BufferUtils.toUtf8(Nimiq.BufferUtils.fromHex(tx.data)),
             height: tx.block_height,
         }));
 }

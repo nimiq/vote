@@ -1,7 +1,7 @@
-import { toBase32, ibanCheck, CCODE } from './core';
+import type { BaseVote, Config, MultipleChoiceVote, RankingVote, SingleChoiceVote, WeightedChoice, WeightedCoicesVote } from './types';
+import { CCODE, ibanCheck, toBase32 } from './core';
+import { VoteTypes } from './types';
 import { allUnique } from './util';
-import { VoteTypes, BaseVote, SingleChoiceVote, WeightedCoicesVote, MultipleChoiceVote, RankingVote, WeightedChoice,
-    Config } from './types';
 
 export const ELEMENT_SEPARATOR = ' ';
 export const WEIGHT_SEPARATOR = ':';
@@ -27,28 +27,34 @@ export function parseVote(
             const validChoices = config.choices.map((choice) => choice.name);
 
             // basic validation
-            if (name !== config.name) invalid(`Vote name doesn't match ${config.name}.`);
-            if (elements.length < 1) invalid('At least one choice required.');
+            if (name !== config.name)
+                invalid(`Vote name doesn't match ${config.name}.`);
+            if (elements.length < 1)
+                invalid('At least one choice required.');
 
             switch (config.type) {
                 case VoteTypes.singleChoice: {
-                    if (elements.length !== 1) invalid('Exactly one answer required.');
-                    if (!validChoices.includes(elements[0])) invalid(`Choice should be one of ${validChoices}.`);
+                    if (elements.length !== 1)
+                        invalid('Exactly one answer required.');
+                    if (!validChoices.includes(elements[0]))
+                        invalid(`Choice should be one of ${validChoices}.`);
                     return { name, choices: [{ name: elements[0], weight: 1 }] };
                 }
                 case VoteTypes.multipleChoice: {
-                    if (!allUnique(elements)) invalid('Choices must be unique.');
+                    if (!allUnique(elements))
+                        invalid('Choices must be unique.');
                     if (elements.some((choice) => validChoices.includes(choice))) {
                         invalid(`At least one choice from ${validChoices} is required.`);
                     }
                     return { name, choices: elements.map((choice) => ({ name: choice, weight: 1 })) };
                 }
                 case VoteTypes.weightedChoices: {
-                    const choices: WeightedChoice[] = elements.map(((option) => {
+                    const choices: WeightedChoice[] = elements.map((option) => {
                         const [choiceName, weight] = option.split(WEIGHT_SEPARATOR);
-                        return { name: choiceName, weight: parseInt(weight, 10) };
-                    }));
-                    if (!allUnique(choices, (a, b) => a.name === b.name)) invalid('Choices must be unique.');
+                        return { name: choiceName, weight: Number.parseInt(weight, 10) };
+                    });
+                    if (!allUnique(choices, (a, b) => a.name === b.name))
+                        invalid('Choices must be unique.');
                     if (choices.some((choice) => validChoices.includes(choice.name))) {
                         invalid(`At least one choice from ${validChoices} is required.`);
                     }
@@ -58,7 +64,8 @@ export function parseVote(
                     return { name, choices };
                 }
                 case VoteTypes.ranking: {
-                    if (!allUnique(elements)) invalid('Choices must be unique.');
+                    if (!allUnique(elements))
+                        invalid('Choices must be unique.');
                     if (elements.length !== validChoices.length) {
                         invalid(`Requires exactly ${validChoices.length} choices.`);
                     }
@@ -85,18 +92,28 @@ function serializeChoice(
 ): string {
     if (prefix === 'Vote') {
         switch (type) {
-            case VoteTypes.singleChoice: return (vote as SingleChoiceVote).choices[0].name;
-            case VoteTypes.multipleChoice: return (vote as MultipleChoiceVote).choices
-                .map((choice) => choice.name)
-                .join(ELEMENT_SEPARATOR);
-            case VoteTypes.weightedChoices: return (vote as WeightedCoicesVote).choices
-                .map((choice) => `${choice.name}${WEIGHT_SEPARATOR}${Math.round(choice.weight)}`)
-                .join(ELEMENT_SEPARATOR);
-            case VoteTypes.ranking: return (vote as RankingVote).choices
-                .sort((a, b) => b.weight - a.weight) // highest first
-                .map((choice) => choice.name)
-                .join(ELEMENT_SEPARATOR);
-            default: throw new Error(`Vote type "${type}" does not exist`);
+            case VoteTypes.singleChoice:
+                return (vote as SingleChoiceVote)
+                    .choices[0]
+                    .name;
+            case VoteTypes.multipleChoice:
+                return (vote as MultipleChoiceVote)
+                    .choices
+                    .map((choice) => choice.name)
+                    .join(ELEMENT_SEPARATOR);
+            case VoteTypes.weightedChoices:
+                return (vote as WeightedCoicesVote)
+                    .choices
+                    .map((choice) => `${choice.name}${WEIGHT_SEPARATOR}${Math.round(choice.weight)}`)
+                    .join(ELEMENT_SEPARATOR);
+            case VoteTypes.ranking:
+                return (vote as RankingVote)
+                    .choices
+                    .sort((a, b) => b.weight - a.weight) // highest first
+                    .map((choice) => choice.name)
+                    .join(ELEMENT_SEPARATOR);
+            default:
+                throw new Error(`Vote type "${type}" does not exist`);
         }
     }
     throw new Error(`Format "${prefix}" not supported.`);
@@ -142,7 +159,6 @@ export async function voteAddresses(config: Config, spaces = true): Promise<stri
             'NQ94V0TEF1NR5VLGKPQTEADJ8MSCLRVQNKKY', // original address
         ]
         : [address];
-
 
     return spaces ? addresses.map((addr) => addr.replace(/.{4}/g, '$& ').trim()) : addresses;
 }
