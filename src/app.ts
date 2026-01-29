@@ -312,6 +312,7 @@ export default class App extends Vue {
             const stakerBalance = staker ? staker.balance + staker.inactiveBalance + staker.retiredBalance : 0;
 
             this.vote.value = accountBalance + stakerBalance;
+            this.showPreliminaryResults(); // Refresh
         } catch { /* not a problem if we miss the account balance */ }
         localStorage.vote = JSON.stringify(this.vote);
     }
