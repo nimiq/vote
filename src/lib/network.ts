@@ -1,4 +1,4 @@
-import * as Nimiq from '@nimiq/core/web';
+import * as Nimiq from '@nimiq/core';
 
 export type Tx = {
     hash: string,

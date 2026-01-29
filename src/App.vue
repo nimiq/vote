@@ -10,7 +10,7 @@ import type {
     ElectionVote,
     Option,
 } from './lib/types';
-import * as Nimiq from '@nimiq/core/web';
+import * as Nimiq from '@nimiq/core';
 import HubApi from '@nimiq/hub-api';
 import { CloseIcon, InfoCircleSmallIcon, Tooltip } from '@nimiq/vue3-components';
 import distinctColors from 'distinct-colors';
@@ -598,10 +598,6 @@ onMounted(async () => {
     await nextTick();
 
     try {
-    // Initialize Nimiq WASM
-        await Nimiq.default();
-        console.log('Nimiq initialized');
-
         const config = new Nimiq.ClientConfiguration();
         if (testnet) {
             config.network('TestAlbatross');
