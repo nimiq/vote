@@ -390,7 +390,10 @@ export default class App extends Vue {
                     // Only update accounts that have not been filtered out already
                     const balance = balancesByAddress.get(address);
                     if (balance !== undefined) {
-                        balancesByAddress.set(address, balance + staker.balance + staker.inactiveBalance + staker.retiredBalance);
+                        balancesByAddress.set(
+                            address,
+                            balance + staker.balance + staker.inactiveBalance + staker.retiredBalance,
+                        );
                     }
                 });
             }));
