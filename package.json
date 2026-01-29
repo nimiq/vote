@@ -17,7 +17,7 @@
     "@nimiq/style": "^0.8.5",
     "@nimiq/utils": "^0.12.4",
     "@nimiq/vue3-components": "github:nimiq/vue3-components#build/vote",
-    "distinct-colors": "^2.1.0",
+    "distinct-colors": "^3.0.0",
     "string-hash": "^1.1.3",
     "vue": "^3.5.13",
     "vuedraggable": "^4.1.0"
@@ -25,13 +25,13 @@
   "devDependencies": {
     "@antfu/eslint-config": "^7.2.0",
     "@types/string-hash": "^1.1.1",
-    "@vitejs/plugin-vue": "^5.2.0",
+    "@vitejs/plugin-vue": "^6.0.3",
     "eslint": "^9.39.2",
     "typescript": "^5.7.0",
-    "vite": "^6.0.0",
-    "vite-plugin-static-copy": "^2.2.0",
+    "vite": "^7.3.1",
+    "vite-plugin-static-copy": "^3.2.0",
     "vite-plugin-top-level-await": "^1.6.0",
     "vite-plugin-wasm": "^3.5.0",
-    "vue-tsc": "^2.2.0"
+    "vue-tsc": "^3.2.4"
   }
 }
