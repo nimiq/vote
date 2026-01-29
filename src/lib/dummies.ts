@@ -47,16 +47,17 @@ export const dummyResult = {
         },
     ],
     stats: {
+        luna: 5,
         votes: 5,
         nim: 78101681467,
     },
 };
 
 // ranking
-// eslint-disable-next-line
+
 const rankingConfig = [{
-    start: 923198,
-    end: 934298,
+    start: 41591964,
+    end: 41592964,
     label: 'What is the optimal supply curve?',
     name: 'pick-curve',
     type: VoteTypes.ranking,
@@ -91,7 +92,8 @@ const rankingConfig = [{
 }];
 
 // single choice
-// eslint-disable-next-line
+// @ts-expect-error Unused variable
+// eslint-disable-next-line unused-imports/no-unused-vars
 const singleChoiceConfig = [{
     start: 920884,
     end: 1040884,
@@ -122,4 +124,4 @@ const singleChoiceConfig = [{
     results: 'chocolate-vs-vanilla-2018',
 }];
 
-export const dummyConfig = singleChoiceConfig;
+export const dummyConfig = rankingConfig;

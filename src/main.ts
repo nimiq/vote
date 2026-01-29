@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import { createApp } from 'vue';
 import App from './App.vue';
 import { testnet } from './lib/const';
 
@@ -8,10 +8,8 @@ if (window.hasBrowserWarning) {
 }
 
 // Specify where the svg asset for the Nimiq identicons is located. The file gets copied to this location via
-// the copy-webpack-plugin as specified in vue.config.js
-window.NIMIQ_IQONS_SVG_PATH = `${process.env.BASE_URL}img/iqons.min.svg`;
-
-Vue.config.productionTip = false;
+// the vite-plugin-static-copy as specified in vite.config.ts
+window.NIMIQ_IQONS_SVG_PATH = `${import.meta.env.BASE_URL}img/iqons.min.svg`;
 
 // Display testnet warning
 const $testnetWarning = document.getElementById('testnet-warning')!;
@@ -23,6 +21,4 @@ if (testnet) {
     $testnetWarning.remove();
 }
 
-new Vue({
-    render: (h) => h(App),
-}).$mount('#app');
+createApp(App).mount('#app');
