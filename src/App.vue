@@ -22,7 +22,7 @@ import { contactInfo, debug, dummies, testnet } from './lib/const';
 import { loadConfig, loadResults } from './lib/data';
 import { findTxBetween, rewardsSince, watchApi } from './lib/network';
 import { VoteTypes } from './lib/types';
-import { blockDate as blockDateUtil } from './lib/util';
+import { blockDate as blockDateUtil, blocksToSeconds } from './lib/util';
 import { parseVote, serializeVote, voteAddresses, voteTotalWeight } from './lib/votes';
 
 import '@nimiq/style/nimiq-style.min.css';
@@ -103,7 +103,7 @@ const canVote = computed(() => {
 const timeRemaining = computed(() => {
     if (!votingConfig.value)
         return '';
-    const seconds = votingConfig.value.end - height.value;
+    const seconds = blocksToSeconds(votingConfig.value.end - height.value);
     const days = Math.floor(seconds / (24 * 60 * 60));
     const hours = Math.floor((seconds - days * 24 * 60 * 60) / (60 * 60));
     const minutes = Math.floor((seconds - (days * 24 * 60 * 60 + hours * 60 * 60)) / 60);
