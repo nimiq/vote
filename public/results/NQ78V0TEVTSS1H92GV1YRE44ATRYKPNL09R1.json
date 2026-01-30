@@ -1,0 +1,46 @@
+{
+    "label": "Will the sun shine tomorrow? (Test vote)",
+    "results": [
+        {
+            "label": "Cloudy with a chance of meatballs",
+            "value": 9175615263,
+            "votes": [
+                {
+                    "sender": "NQ78 H0BC MUGB TG2Q E2SC 0GAB UGD5 NJ0B Y335",
+                    "height": 41594036,
+                    "value": 1013828
+                },
+                {
+                    "sender": "NQ72 QN6K 7YQX 5EN4 FVDJ UABS VQR7 C5X4 E3CQ",
+                    "height": 41575390,
+                    "value": 9174601435
+                }
+            ]
+        },
+        {
+            "label": "Yes",
+            "value": 1688500148,
+            "votes": [
+                {
+                    "sender": "NQ28 3SUH T03S 0HAM EJD8 MCL2 ECKJ G8S1 X2FC",
+                    "height": 41586860,
+                    "value": 1143595839
+                },
+                {
+                    "sender": "NQ71 4NP1 51M7 3M05 BGAS VPTH JRY3 RADA ALVQ",
+                    "height": 41575238,
+                    "value": 544904309
+                }
+            ]
+        },
+        {
+            "label": "No",
+            "value": 0,
+            "votes": []
+        }
+    ],
+    "stats": {
+        "votes": 4,
+        "luna": 10864115411
+    }
+}
