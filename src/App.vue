@@ -20,7 +20,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import draggable from 'vuedraggable';
 import { contactInfo, debug, dummies, testnet } from './lib/const';
 import { loadConfig, loadResults } from './lib/data';
-import { findTxBetween, rewardsSince, watchApi } from './lib/network';
+import { findTxBetween, stakerRewardsSince, validatorRewardsSince, watchApi } from './lib/network';
 import { VoteTypes } from './lib/types';
 import { blockDate as blockDateUtil, blocksToSeconds } from './lib/util';
 import { parseVote, serializeVote, voteAddresses, voteTotalWeight } from './lib/votes';
@@ -358,9 +358,13 @@ async function countVotes(config = votingConfig.value!): Promise<ElectionResults
             }
 
             // subtract any NIM that were mined in the meantime
-            const rewards = await rewardsSince(sender, end, testnet);
-            for (const inherent of rewards) {
-                v.value -= inherent.reward;
+            const validatorRewards = await validatorRewardsSince(sender, end, testnet);
+            const stakerRewards = await stakerRewardsSince(sender, end, currentHeight, testnet);
+            for (const { reward } of validatorRewards) {
+                v.value -= reward;
+            }
+            for (const { reward } of stakerRewards) {
+                v.value -= reward;
             }
         }
     }

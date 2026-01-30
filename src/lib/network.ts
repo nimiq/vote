@@ -1,4 +1,5 @@
 import * as Nimiq from '@nimiq/core';
+import { blockDate } from './util';
 
 export type Tx = {
     hash: string,
@@ -10,7 +11,7 @@ export type Tx = {
     height: number,
 };
 
-export type Inherent = {
+export type Reward = {
     reward: number,
 };
 
@@ -100,13 +101,27 @@ export async function findTxBetween(
         }));
 }
 
-export async function rewardsSince(address: string, startHeight: number, testnet: boolean): Promise<Inherent[]> {
-    // {"height":0,"timestamp":<unix timestamp>,"hash":"...","fees":276,"reward":<luna>},
+export async function validatorRewardsSince(address: string, startHeight: number, testnet: boolean): Promise<Reward[]> {
     return (await watchApiV2GetAllUntil(`api/v2/validator/${address}/rewards`, testnet, (results, limit) =>
         results.length < limit || Math.min(...results.map((r) => r.block.height)) < startHeight, // done
     ))
         .filter((inherent) => inherent.block.height > startHeight)
         .map((inherent) => ({
             reward: inherent.value,
+        }));
+}
+
+export async function stakerRewardsSince(
+    address: string,
+    startHeight: number,
+    currentHeight: number,
+    testnet: boolean,
+): Promise<Reward[]> {
+    const from = blockDate(startHeight, currentHeight).toISOString();
+    const to = new Date().toISOString();
+    return (await watchApi(`api/v2/staker/${address}/events/restake-grouped2?from=${from}&to=${to}`, testnet))
+        .groups
+        .map((event: any) => ({
+            reward: event.aggregatedValue,
         }));
 }
