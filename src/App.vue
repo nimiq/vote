@@ -192,6 +192,36 @@ async function trySubmittingVote() {
     }
 }
 
+/**
+ * Calculate the available balance of an account, which is the balance that can actually be used for voting.
+ *
+ * For basic accounts, this is just the balance. For vesting contracts, it is calculated how much of the balance is still locked.
+ */
+function availableBalance(account: Nimiq.PlainAccount, voteEndTime: number): number {
+    if (account.type === 'basic') {
+        return account.balance;
+    } else if (account.type === 'vesting') {
+        const now = Math.min(new Date().getTime(), voteEndTime);
+        let unlocked = 0;
+        let start = account.startTime; // All times on the account are in milliseconds
+        while ((start += account.timeStep) <= now) {
+            unlocked += account.stepAmount;
+            if (unlocked >= account.totalAmount) {
+                unlocked = account.totalAmount;
+                break;
+            }
+        }
+        const stillLocked = account.totalAmount - unlocked;
+        // If the contract had balance still locked, but all balance has been withdrawn since the end of the vote,
+        // the returned "available balance" is negative.
+        // That still works, because then through the tx history the outgoing tx will be re-added to the balance,
+        // bringing it to what was actually available at the end of the vote (which can be 0).
+        return account.balance - stillLocked;
+    } else {
+        return 0;
+    }
+}
+
 async function submitVote() {
     const config = votingConfig.value;
     const voteData: BaseVote = { name: config!.name, choices: serializeChoices() };
@@ -210,8 +240,8 @@ async function submitVote() {
         disableDisclaimer: true,
     });
 
-    if (signedTransaction.raw.senderType !== Nimiq.AccountType.Basic) {
-        throw new Error('You can only vote with basic accounts. Vesting and HTLC contracts are not allowed.');
+    if (![Nimiq.AccountType.Basic, Nimiq.AccountType.Vesting].includes(signedTransaction.raw.senderType)) {
+        throw new Error('You can only vote with basic and vesting accounts. HTLC contracts are not allowed.');
     }
 
     const { sender, value: txValue } = signedTransaction.raw;
@@ -230,7 +260,7 @@ async function submitVote() {
             client.value?.getStaker(sender),
         ]);
 
-        const accountBalance = account?.balance || 0;
+        const accountBalance = account ? availableBalance(account, Infinity) : 0;
         const stakerBalance = staker ? staker.balance + staker.inactiveBalance + staker.retiredBalance : 0;
 
         vote.value.value = accountBalance + stakerBalance;
@@ -289,13 +319,14 @@ async function countVotes(config = votingConfig.value!): Promise<ElectionResults
     // Get accounts details in parallel for all chunks
     const balancesByAddress = new Map<string, number>();
     try {
+        const votingEndTime = blockDateUtil(config.end, height.value).getTime();
         await Promise.all(addressChunk.map(async (chunk) => {
             const accounts = await nimiqClient.getAccounts(chunk);
             accounts.forEach((account, i) => {
                 const address = chunk[i];
-                // Only keep BASIC accounts
-                if (account.type === 'basic') {
-                    balancesByAddress.set(address, account.balance);
+                const balance = availableBalance(account, votingEndTime);
+                if (balance) {
+                    balancesByAddress.set(address, balance);
                 } else {
                     balancesByAddress.delete(address);
                 }
@@ -329,7 +360,7 @@ async function countVotes(config = votingConfig.value!): Promise<ElectionResults
         error('Failed to get account balances when counting votes', e as Error, 'Try reloading.');
     }
 
-    // Remove votes from non-basic accounts, it's not allowed to vote with vesting or HTLC contracts
+    // Remove votes from unallowed accounts - it's not allowed to vote with HTLC contracts
     votes = votes.filter((v) => balancesByAddress.has(v.tx.sender));
 
     stats.votes = votes.length;
