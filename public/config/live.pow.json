@@ -1,0 +1,64 @@
+{
+  "votings": [{
+    "start": 1082458,
+    "end": 1096863,
+    "label": "Should the NIM supply growth curve be adjusted?",
+    "name": "change-curve",
+    "type": "singleChoice",
+    "link": "https://www.nimiq.com/blog/nimiq-20-supply-curve-voting/",
+    "announcement": "The vote on \"Should Nimiq adjust the current supply curve?\" will start on Friday May 8, 2020 at approximately 12:00 noon UTC.",
+    "announcementLink": "https://www.nimiq.com/blog/nimiq-20-supply-curve-voting-procedure/",
+    "choices": [{
+      "name": "yes",
+      "label": "Yes"
+    }, {
+      "name": "no",
+      "label": "No"
+    }]
+    }, {
+      "start": 1112574,
+      "end": 1126992,
+      "label": "Which NIM supply curve do you prefer?",
+      "name": "rank-curves",
+      "type": "ranking",
+      "announcement": "The vote on \"Which NIM supply curve do you prefer?\" will start on Friday May 29, 2020 at approximately 12:00 noon UTC.",
+      "link": "https://www.nimiq.com/blog/nimiq-20-supply-curve-voting/",
+      "choices": [{
+        "name": "green",
+        "label": "Green curve"
+      }, {
+        "name": "red",
+        "label": "Red curve"
+      }, {
+        "name": "blue",
+        "label": "Blue curve"
+      }, {
+        "name": "other",
+        "label": "None of these"
+      }]
+    }, {
+      "start": 2205938,
+      "end": 2206938,
+      "label": "Community Funding Board Election Q4 2020",
+      "name": "cfb-q4-2020",
+      "type": "ranking",
+      "announcement": "The Q4 2020 Community Funding Board elections will run from Monday, Nov 30 to Monday, Dec 7. To learn more about the candidates, check the link below. The three highest voted candidates will become the next community representatives.",
+      "link": "https://forum.nimiq.community/c/community/organization/11",
+      "choices": [{
+        "name": "f",
+        "label": "FonsL"
+      }, {
+        "name": "a",
+        "label": "Albermonte"
+      }, {
+        "name": "d",
+        "label": "Diese Gute"
+      }, {
+        "name": "m",
+        "label": "Maestro"
+      }, {
+        "name": "g",
+        "label": "Glemiere"
+      }]
+    }]
+}
