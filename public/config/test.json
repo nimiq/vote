@@ -23,5 +23,38 @@
       "name": "g",
       "label": "Glemiere"
     }]
+  }, {
+    "start": 42283319,
+    "end": 42721897,
+    "label": "Community Council Election 2026",
+    "name": "cc-2026",
+    "type": "ranking",
+    "announcement": "The 2026 Nimiq Community Council elections. To learn more about the candidates, check the link below. The five highest voted candidates will become the next community representatives.",
+    "link": "https://forum.nimiq.community/t/nimiq-community-council-nomination-thread/2416",
+    "choices": [{
+      "name": "s",
+      "label": "SpongeBob"
+    }, {
+      "name": "p",
+      "label": "Patrick"
+    }, {
+      "name": "q",
+      "label": "Squidward"
+    }, {
+      "name": "l",
+      "label": "Plankton"
+    }, {
+      "name": "k",
+      "label": "Mr. Krabs"
+    }, {
+      "name": "y",
+      "label": "Sandy"
+    }, {
+      "name": "g",
+      "label": "Gary"
+    }, {
+      "name": "a",
+      "label": "Patchy"
+    }]
   }]
 }
