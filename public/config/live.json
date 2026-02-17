@@ -1,3 +1,67 @@
 {
-  "votings": []
+  "votings": [
+    {
+      "start": 43291575,
+      "end": 44695027,
+      "label": "Nimiq Community Council Election Q1 2026",
+      "name": "council-q1-2026",
+      "type": "ranking",
+      "announcement": "The Q1 2026 Nimiq Community Council Election will run from Monday, Feb 16 00:00 CET to Friday, Mar 2 00:00 CET. To learn more about the candidates, check the link below. The five highest voted candidates will become the next community representatives.",
+      "link": "https://nimiq.com/blog/community-council-candidates-voting",
+      "choices": [
+        {
+          "name": "a",
+          "label": "Ako"
+        },
+        {
+          "name": "b",
+          "label": "Big Mac"
+        },
+        {
+          "name": "c",
+          "label": "CoinRevolution"
+        },
+        {
+          "name": "d",
+          "label": "Dov Azencot"
+        },
+        {
+          "name": "h",
+          "label": "Harley"
+        },
+        {
+          "name": "j",
+          "label": "Jonathan"
+        },
+        {
+          "name": "k",
+          "label": "Kaichao"
+        },
+        {
+          "name": "o",
+          "label": "Koniezcko"
+        },
+        {
+          "name": "m",
+          "label": "Mike Wille"
+        },
+        {
+          "name": "p",
+          "label": "Paul"
+        },
+        {
+          "name": "l",
+          "label": "plsenteryournamehere"
+        },
+        {
+          "name": "s",
+          "label": "Serb"
+        },
+        {
+          "name": "t",
+          "label": "Tobi"
+        }
+      ]
+    }
+  ]
 }
