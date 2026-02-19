@@ -205,7 +205,7 @@ function availableBalance(account: Nimiq.PlainAccount, voteEndTime: number): num
         const now = Math.min(new Date().getTime(), voteEndTime);
         let unlocked = 0;
         let start = account.startTime; // All times on the account are in milliseconds
-        while ((start += account.timeStep) <= now) {
+        while ((start += account.timeStep) <= now) { // eslint-disable-line no-cond-assign
             unlocked += account.stepAmount;
             if (unlocked >= account.totalAmount) {
                 unlocked = account.totalAmount;
@@ -863,7 +863,7 @@ onMounted(async () => {
           </draggable>
         </div>
         <a class="nq-link show-results" @click="showResults = true">
-            See results
+          See results
         </a>
       </div>
 
