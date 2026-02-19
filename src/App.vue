@@ -56,6 +56,7 @@ function loadStoredVote(): CastVote | null {
     }
 }
 const vote = ref<CastVote | null>(loadStoredVote());
+const showResults = ref(false);
 const newlyVoted = ref(false);
 const errorVoting = ref('');
 
@@ -784,7 +785,7 @@ onMounted(async () => {
     </div>
 
     <!-- voting -->
-    <div v-else-if="votingConfig && !voted" class="nq-card voting" :class="type">
+    <div v-else-if="votingConfig && !voted && !showResults" class="nq-card voting" :class="type">
       <div class="nq-card-header">
         <h1>{{ votingConfig.label }}</h1>
         <p class="sub">
@@ -861,6 +862,9 @@ onMounted(async () => {
             </template>
           </draggable>
         </div>
+        <a class="nq-link show-results" @click="showResults = true">
+            See results
+        </a>
       </div>
 
       <div class="nq-card-footer">
@@ -897,7 +901,7 @@ onMounted(async () => {
           </div>
         </template>
         <template v-else>
-          <h1>{{ resultsConfig!.label }}</h1>
+          <h1>{{ resultsConfig?.label || 'Loading...' }}</h1>
           <p class="sub">
             Voting results
           </p>
@@ -993,12 +997,17 @@ onMounted(async () => {
             <br> Results are preliminary.
           </template>
         </p>
-        <div v-if="votingConfig" class="vote-again">
+        <div v-if="votingConfig && voted" class="vote-again">
           <div class="note">
             You can change your vote by voting again. <br> The last vote per address counts.
           </div>
           <button class="vote-again nq-button-s" @click="clearVote">
             Vote Again
+          </button>
+        </div>
+        <div v-if="votingConfig && !voted" class="vote-again">
+          <button class="vote-again nq-button-s" @click="showResults = false">
+            Vote Now
           </button>
         </div>
       </div>
@@ -1247,8 +1256,18 @@ p {
     cursor: move;
 }
 
+.voting .show-results {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-top: 2rem;
+}
+
 .voting .nq-card-footer {
     position: relative;
+}
+
+.voting .nq-card-footer .rules {
+    margin-top: 0;
 }
 
 .voting .nq-card-footer .error {
