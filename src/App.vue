@@ -325,9 +325,8 @@ async function countVotes(config = votingConfig.value!): Promise<ElectionResults
             const accounts = await nimiqClient.getAccounts(chunk);
             accounts.forEach((account, i) => {
                 const address = chunk[i];
-                const balance = availableBalance(account, votingEndTime);
-                if (balance) {
-                    balancesByAddress.set(address, balance);
+                if (account.type === 'basic' || account.type === 'vesting') {
+                    balancesByAddress.set(address, availableBalance(account, votingEndTime));
                 } else {
                     balancesByAddress.delete(address);
                 }
