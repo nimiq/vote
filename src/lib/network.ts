@@ -117,9 +117,11 @@ export async function stakerRewardsSince(
     currentHeight: number,
     testnet: boolean,
 ): Promise<Reward[]> {
-    const from = blockDate(startHeight, currentHeight).toISOString();
-    const to = new Date().toISOString();
-    return (await watchApi(`api/v2/staker/${address}/events/restake-grouped2?from=${from}&to=${to}`, testnet))
+    const from = blockDate(startHeight, currentHeight);
+    const to = new Date();
+    // Ensure the timestamp is not considered "in the future" by the API, which would cause it to return a 400 response.
+    to.setSeconds(to.getSeconds() - 1);
+    return (await watchApi(`api/v2/staker/${address}/events/restake-grouped2?from=${from.toISOString()}&to=${to.toISOString()}`, testnet))
         .groups
         .map((event: any) => ({
             reward: event.aggregatedValue,
