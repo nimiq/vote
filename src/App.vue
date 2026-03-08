@@ -12,12 +12,13 @@ import type {
 } from './lib/types';
 import * as Nimiq from '@nimiq/core';
 import HubApi from '@nimiq/hub-api';
+import { STAKING_CONTRACT_ADDRESS } from '@nimiq/utils/albatross-policy';
 import { CloseIcon, InfoCircleSmallIcon, Tooltip } from '@nimiq/vue3-components';
 import distinctColors from 'distinct-colors';
 import stringHash from 'string-hash';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-
 import draggable from 'vuedraggable';
+
 import { contactInfo, debug, dummies, testnet } from './lib/const';
 import { loadConfig, loadResults } from './lib/data';
 import { findTxBetween, stakerRewardsSince, validatorRewardsSince, watchApi } from './lib/network';
@@ -380,11 +381,15 @@ async function countVotes(config = votingConfig.value!): Promise<ElectionResults
             // Get all transaction since the end of the vote, subtract incoming and add outgoing
             const txs = await findTxBetween([sender], end, currentHeight, testnet);
             for (const tx of txs) {
-                // Subtract all NIM that the address received after the vote ended
-                if (tx.recipient === sender)
+                // Subtract all NIM that the address received after the vote ended,
+                // except if it was from the staking contract (then it was not counted in the staker balance,
+                // but is counted here in the account balance)
+                if (tx.recipient === sender && tx.sender !== STAKING_CONTRACT_ADDRESS)
                     v.value -= tx.value;
-                // Add all NIM that the address sent after the vote ended
-                if (tx.sender === sender)
+                // Add all NIM that the address sent after the vote ended,
+                // except if it was to the staking contract (then it was counted in the staker balance,
+                // but is not counted here in the account balance)
+                if (tx.sender === sender && tx.recipient !== STAKING_CONTRACT_ADDRESS)
                     v.value += tx.value + tx.fee;
             }
 
